@@ -29,7 +29,7 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ── MONGODB ───────────────────────────────────────────────────
-MONGO_URL    = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+MONGO_URL    = os.getenv("MONGO_URL", "mongodb+srv://orinaguha2005_db_user:7YjuBNdi40xZasT2@artcraft.f27ttc1.mongodb.net/artcraft")
 client       = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=True)
 db           = client["artcraft"]
 
