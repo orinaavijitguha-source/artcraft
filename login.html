@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtCraft — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand:#b5631a;--brand-dark:#8a4a12;--brand-light:#fff3e8;--brand-mid:#f5e6d3;
+      --ink:#1a1a1a;--ink2:#444;--ink3:#777;--ink4:#bbb;
+      --border:#e8ddd4;--bg:#faf8f5;--white:#fff;
+      --green:#2a7a4b;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fdecea;--gold:#c9a84c;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex}
+    .left{width:46%;min-height:100vh;background:linear-gradient(155deg,#1e0e04 0%,#4a1f06 45%,#7a3510 100%);position:relative;display:flex;flex-direction:column;padding:44px 50px;overflow:hidden}
+    .orb{position:absolute;border-radius:50%;pointer-events:none}
+    .orb-1{width:420px;height:420px;background:radial-gradient(circle,rgba(201,168,76,.10) 0%,transparent 70%);top:-120px;right:-80px}
+    .orb-2{width:300px;height:300px;background:radial-gradient(circle,rgba(181,99,26,.15) 0%,transparent 70%);bottom:-80px;left:-60px}
+    .left-brand{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:#fff;position:relative;z-index:2}
+    .left-brand span{color:var(--gold)}
+    .left-body{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+    .left-eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+    .left-headline{font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:18px}
+    .left-headline em{font-style:italic;color:var(--gold)}
+    .left-desc{font-size:14px;color:rgba(255,255,255,.6);line-height:1.75;max-width:360px;margin-bottom:38px}
+
+
+    .left-footer{font-size:11px;color:rgba(255,255,255,.28);position:relative;z-index:2}
+    .right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 50px;overflow-y:auto}
+    .auth-wrap{width:100%;max-width:420px;animation:fadeUp .45s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .auth-title{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:5px}
+    .auth-sub{font-size:13.5px;color:var(--ink3);margin-bottom:26px}
+    .mode-toggle{display:flex;background:var(--brand-mid);border-radius:10px;padding:4px;margin-bottom:26px}
+    .mode-btn{flex:1;padding:9px;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink3);background:transparent}
+    .mode-btn.active{background:var(--white);color:var(--brand);box-shadow:0 2px 8px rgba(181,99,26,.12)}
+    .section-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
+    .role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px}
+    .role-card{border:2px solid var(--border);border-radius:12px;padding:13px 8px 11px;text-align:center;cursor:pointer;transition:all .18s;background:var(--white)}
+    .role-card:hover,.role-card.active{border-color:var(--brand);background:var(--brand-light);transform:translateY(-1px)}
+    .role-card.active{box-shadow:0 0 0 3px rgba(181,99,26,.10)}
+    .role-icon{width:38px;height:38px;border-radius:10px;background:var(--brand-mid);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;transition:background .18s}
+    .role-card.active .role-icon,.role-card:hover .role-icon{background:rgba(181,99,26,.18)}
+    .role-icon svg{width:19px;height:19px;stroke:var(--brand-dark);stroke-width:1.8;fill:none}
+    .role-name{font-size:12.5px;font-weight:700;color:var(--ink2)}
+    .role-hint{font-size:10px;color:var(--ink4);margin-top:2px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-group{margin-bottom:13px}
+    .form-group label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+    .input-wrap{position:relative}
+    .input-wrap svg.ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--ink4);stroke-width:1.8;fill:none;pointer-events:none;transition:stroke .18s}
+    .input-wrap:focus-within svg.ic{stroke:var(--brand)}
+    input.fi{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px 10px 37px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--white);outline:none;transition:border-color .18s,box-shadow .18s}
+    input.fi:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(181,99,26,.09)}
+    input.fi.err{border-color:var(--red)}
+    .pw-eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);cursor:pointer;background:none;border:none;padding:2px;display:flex;align-items:center}
+    .pw-eye svg{width:15px;height:15px;stroke:var(--ink4);stroke-width:1.8;fill:none}
+    .ferr{font-size:11.5px;color:var(--red);margin-top:4px;display:none}
+    .ferr.show{display:block}
+    .forgot{text-align:right;margin-bottom:4px}
+    .forgot a{font-size:12px;color:var(--brand);text-decoration:none;font-weight:500}
+    .btn-submit{width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;letter-spacing:.01em}
+    .btn-submit:hover{background:var(--brand-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(181,99,26,.28)}
+    .btn-submit svg{width:16px;height:16px;stroke:#fff;stroke-width:2;fill:none}
+    .btn-submit:disabled{opacity:.65;pointer-events:none}
+    .alert{padding:10px 13px;border-radius:9px;font-size:13px;font-weight:500;margin-bottom:14px;display:none;align-items:center;gap:9px}
+    .alert.show{display:flex}
+    .alert-err{background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2}
+    .alert-ok{background:var(--green-bg);color:var(--green);border:1px solid #a8d8b9}
+    .alert svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;flex-shrink:0}
+    .switch-mode{text-align:center;font-size:13px;color:var(--ink3);margin-top:14px}
+    .switch-mode a{color:var(--brand);font-weight:600;text-decoration:none;cursor:pointer}
+    .terms{font-size:11px;color:var(--ink4);text-align:center;margin-top:10px;line-height:1.6}
+    .terms a{color:var(--brand);text-decoration:none}
+    #panel-login.hidden,#panel-signup.hidden{display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:820px){.left{display:none}.right{padding:28px 22px}}
+  
+    /* ── MOBILE RESPONSIVE ─────────────────────────── */
+    @media(max-width:768px){
+      .left{ display:none }
+      .right{ padding:24px 20px; align-items:flex-start; overflow-y:auto }
+      .auth-wrap{ padding-top:20px }
+      .auth-title{ font-size:24px }
+      .role-grid{ gap:7px }
+      .role-card{ padding:10px 6px 9px }
+      .role-icon{ width:32px; height:32px }
+      .role-name{ font-size:11.5px }
+      .role-hint{ font-size:9px }
+      input.fi{ font-size:16px }
+      .btn-submit{ padding:13px; font-size:15px }
+      .form-row{ grid-template-columns:1fr 1fr }
+    }
+  </style>
+</head>
+<body>
+<div class="left">
+  <div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div class="left-brand"><span>Art</span>Craft</div>
+  <div class="left-body">
+    <div class="left-eyebrow">India's Creative Marketplace</div>
+    <div class="left-headline">Where <em>art</em><br>finds its<br>purpose.</div>
+    <div class="left-desc">Connect gifted Indian artists with brands and collectors who value handcrafted work. Every purchase supports a real creator.</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--gold);stroke-width:1.8;fill:none"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg></div><div><div style="font-size:13px;font-weight:600;color:#fff">For Artists</div><div style="font-size:11.5px;color:rgba(255,255,255,.5)">Sell artworks · Upload tutorials · Join competitions</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--gold);stroke-width:1.8;fill:none"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><div><div style="font-size:13px;font-weight:600;color:#fff">For Brands</div><div style="font-size:11.5px;color:rgba(255,255,255,.5)">Hire artists · Post jobs · Run campaigns</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--gold);stroke-width:1.8;fill:none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div style="font-size:13px;font-weight:600;color:#fff">For Collectors</div><div style="font-size:11.5px;color:rgba(255,255,255,.5)">Buy original art · Learn from tutorials</div></div></div>
+    </div>
+
+  </div>
+
+  <div class="left-footer">2025 ArtCraft · Built for Indian artists</div>
+</div>
+
+<div class="right">
+  <div class="auth-wrap">
+
+    <!-- LOGIN PANEL -->
+    <div id="panel-login">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to your ArtCraft account</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="login-tab-btn">Sign In</button>
+        <button class="mode-btn" onclick="switchMode('signup')">Create Account</button>
+      </div>
+      <div class="section-label">I am a —</div>
+      <div class="role-grid" id="login-roles">
+        <div class="role-card active" data-role="artist" onclick="selectRole('login','artist')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+          <div class="role-name">Artist</div><div class="role-hint">Sell &amp; teach</div>
+        </div>
+        <div class="role-card" data-role="brand" onclick="selectRole('login','brand')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+          <div class="role-name">Brand</div><div class="role-hint">Hire talent</div>
+        </div>
+        <div class="role-card" data-role="customer" onclick="selectRole('login','customer')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="role-name">Customer</div><div class="role-hint">Buy art</div>
+        </div>
+      </div>
+      <div class="alert alert-err" id="login-err">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="login-err-msg">Invalid credentials.</span>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <input type="email" class="fi" id="login-email" placeholder="you@gmail.com" />
+        </div>
+        <div class="ferr" id="lerr-email">Please use a valid email like name@gmail.com or name@yahoo.com</div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" class="fi" id="login-pw" placeholder="••••••••" />
+          <button class="pw-eye" type="button" onclick="togglePw('login-pw',this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="ferr" id="lerr-pw">Password is required.</div>
+      </div>
+      <button class="btn-submit" id="login-btn" onclick="doLogin()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign In
+      </button>
+      <div class="switch-mode">Don't have an account? <a onclick="switchMode('signup')">Create one free</a></div>
+      <div class="terms">By continuing you agree to ArtCraft's <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a></div>
+    </div>
+
+    <!-- SIGNUP PANEL -->
+    <div id="panel-signup" class="hidden">
+      <div class="auth-title">Create account</div>
+      <div class="auth-sub">Join artists, brands &amp; collectors on ArtCraft</div>
+      <div class="mode-toggle">
+        <button class="mode-btn" onclick="switchMode('login')">Sign In</button>
+        <button class="mode-btn active">Create Account</button>
+      </div>
+      <div class="section-label">I am a —</div>
+      <div class="role-grid" id="signup-roles">
+        <div class="role-card active" data-role="artist" onclick="selectRole('signup','artist')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+          <div class="role-name">Artist</div><div class="role-hint">Sell &amp; teach</div>
+        </div>
+        <div class="role-card" data-role="brand" onclick="selectRole('signup','brand')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+          <div class="role-name">Brand</div><div class="role-hint">Hire talent</div>
+        </div>
+        <div class="role-card" data-role="customer" onclick="selectRole('signup','customer')">
+          <div class="role-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="role-name">Customer</div><div class="role-hint">Buy art</div>
+        </div>
+      </div>
+      <div class="alert alert-err" id="signup-err">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="signup-err-msg">Something went wrong.</span>
+      </div>
+      <div class="alert alert-ok" id="signup-ok">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Account created! Redirecting…</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><div class="input-wrap"><svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" class="fi" id="su-fname" placeholder="Priya" /></div></div>
+        <div class="form-group"><label>Last Name</label><div class="input-wrap"><svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="text" class="fi" id="su-lname" placeholder="Sharma" /></div></div>
+      </div>
+      <div class="form-group"><label>Email Address</label><div class="input-wrap"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><input type="email" class="fi" id="su-email" placeholder="you@gmail.com" /></div><div class="ferr" id="serr-email">Please use a valid email like name@gmail.com or name@yahoo.com</div></div>
+      <div class="form-group"><label>Password</label><div class="input-wrap"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" class="fi" id="su-pw" placeholder="Min 8 characters" /><button class="pw-eye" type="button" onclick="togglePw('su-pw',this)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div><div class="ferr" id="serr-pw">Password must be at least 8 characters.</div></div>
+      <div class="form-group"><label>Confirm Password</label><div class="input-wrap"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="password" class="fi" id="su-pw2" placeholder="Repeat password" /></div><div class="ferr" id="serr-pw2">Passwords do not match.</div></div>
+      <button class="btn-submit" id="signup-btn" onclick="doSignup()">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Create Account
+      </button>
+      <div class="switch-mode">Already have an account? <a onclick="switchMode('login')">Sign in</a></div>
+      <div class="terms">By creating an account you agree to <a href="#">Terms</a> &amp; <a href="#">Privacy Policy</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API_BASE = 'RAILWAY_URL_YAHAN';
+
+let loginRole = 'artist', signupRole = 'artist';
+
+// ── Check existing session ────────────────────────────────────
+const existingToken = localStorage.getItem('artcraft_api_token');
+const existingSession = (() => { try { return JSON.parse(localStorage.getItem('artcraft_session_v1')); } catch { return null; } })();
+
+// Verify token with backend before redirecting — don't trust stale localStorage
+if (existingToken && existingSession) {
+  fetch(`${API_BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${existingToken}` }
+  }).then(res => {
+    if (res.ok) {
+      redirectTo(existingSession.role);
+    } else {
+      // Token invalid (e.g. database was reset) — clear and show login
+      localStorage.removeItem('artcraft_api_token');
+      localStorage.removeItem('artcraft_session_v1');
+    }
+  }).catch(() => {
+    // Backend not reachable — clear session to be safe
+    localStorage.removeItem('artcraft_api_token');
+    localStorage.removeItem('artcraft_session_v1');
+  });
+}
+
+function redirectTo(role) {
+  const map = { artist: 'artist.html', brand: 'brand.html', customer: 'customer.html' };
+  window.location.href = map[role] || 'artist.html';
+}
+
+function selectRole(panel, role) {
+  const id = panel === 'login' ? 'login-roles' : 'signup-roles';
+  document.getElementById(id).querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).querySelector(`[data-role="${role}"]`).classList.add('active');
+  if (panel === 'login') loginRole = role; else signupRole = role;
+}
+
+function switchMode(mode) {
+  if (mode === 'signup') {
+    document.getElementById('panel-login').classList.add('hidden');
+    document.getElementById('panel-signup').classList.remove('hidden');
+  } else {
+    document.getElementById('panel-signup').classList.add('hidden');
+    document.getElementById('panel-login').classList.remove('hidden');
+  }
+}
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.querySelector('svg').innerHTML = isText
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+function setBtnLoading(btnId, loading, originalHtml) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite;stroke:#fff;stroke-width:2;fill:none;width:16px;height:16px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Please wait…';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+function showErr(panel, msg) {
+  const el = document.getElementById(panel + '-err');
+  document.getElementById(panel + '-err-msg').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function isValidEmail(email) {
+  // Format check
+  const re = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+  if (!re.test(email)) return false;
+  // Only allow real email providers
+  const domain = email.split('@')[1].toLowerCase();
+  const allowedDomains = [
+    'gmail.com', 'googlemail.com',
+    'yahoo.com', 'yahoo.in', 'yahoo.co.in', 'ymail.com',
+    'hotmail.com', 'hotmail.in', 'hotmail.co.in',
+    'outlook.com', 'outlook.in', 'live.com', 'live.in',
+    'rediffmail.com', 'rediff.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'protonmail.com', 'proton.me',
+    'zoho.com', 'zohomail.com'
+  ];
+  if (!allowedDomains.includes(domain)) return false;
+  return true;
+}
+
+async function apiPost(path, data) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(data)) fd.append(k, v);
+  const res = await fetch(`${API_BASE}${path}`, { method: 'POST', body: fd });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.detail || `Error ${res.status}`);
+  return json;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  let ok = true;
+  ['lerr-email','lerr-pw'].forEach(id => document.getElementById(id).classList.remove('show'));
+
+  if (!email || !isValidEmail(email)) {
+    document.getElementById('lerr-email').classList.add('show'); ok = false;
+  }
+  if (!pw) { document.getElementById('lerr-pw').classList.add('show'); ok = false; }
+  if (!ok) return;
+
+  const origHtml = document.getElementById('login-btn').innerHTML;
+  setBtnLoading('login-btn', true);
+  try {
+    const data = await apiPost('/auth/login', { email, password: pw, role: loginRole });
+    localStorage.setItem('artcraft_api_token', data.token);
+    localStorage.setItem('artcraft_session_v1', JSON.stringify({
+      userId: data.user_id, role: data.role, name: data.name, email: data.email
+    }));
+    redirectTo(data.role);
+  } catch(e) {
+    setBtnLoading('login-btn', false, origHtml);
+    showErr('login', e.message);
+  }
+}
+
+async function doSignup() {
+  const fname = document.getElementById('su-fname').value.trim();
+  const lname = document.getElementById('su-lname').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pw    = document.getElementById('su-pw').value;
+  const pw2   = document.getElementById('su-pw2').value;
+  let ok = true;
+  ['serr-email','serr-pw','serr-pw2'].forEach(id => document.getElementById(id).classList.remove('show'));
+
+  if (!email || !isValidEmail(email)) {
+    document.getElementById('serr-email').classList.add('show'); ok = false;
+  }
+  if (!pw || pw.length < 8) { document.getElementById('serr-pw').classList.add('show'); ok = false; }
+  if (pw !== pw2)            { document.getElementById('serr-pw2').classList.add('show'); ok = false; }
+  if (!fname || !lname)      { showErr('signup', 'Please enter your first and last name.'); ok = false; }
+  if (!ok) return;
+
+  const origHtml = document.getElementById('signup-btn').innerHTML;
+  setBtnLoading('signup-btn', true);
+  try {
+    const data = await apiPost('/auth/signup', {
+      first_name: fname, last_name: lname, email, password: pw, role: signupRole
+    });
+    localStorage.setItem('artcraft_api_token', data.token);
+    localStorage.setItem('artcraft_session_v1', JSON.stringify({
+      userId: data.user_id, role: data.role, name: data.name, email: data.email
+    }));
+    document.getElementById('signup-ok').classList.add('show');
+    setTimeout(() => redirectTo(data.role), 1200);
+  } catch(e) {
+    setBtnLoading('signup-btn', false, origHtml);
+    showErr('signup', e.message);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (!document.getElementById('panel-login').classList.contains('hidden')) doLogin();
+  else doSignup();
+});
+</script>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

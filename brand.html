@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Brand Dashboard — ArtCraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root{
+      --brand:#1a4fa0;--brand-light:#e8f0fd;--brand-dark:#123a78;
+      --ink:#1a1a1a;--ink2:#444;--ink3:#888;--ink4:#bbb;
+      --border:#dde5f0;--bg:#f4f6fb;--white:#fff;
+      --green:#2a7a4b;--green-bg:#e8f5ee;
+      --orange:#b5631a;--orange-bg:#fff3e8;
+      --red:#c0392b;--red-bg:#fdecea;
+      --purple:#6d28d9;--purple-bg:#ede9fe;
+      --sidebar-w:244px;--r:12px;--shadow:0 2px 12px rgba(0,0,0,.07)
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+    /* ── Sidebar ── */
+    .sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+    .sb-brand{padding:22px 20px 18px;font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--ink);border-bottom:1px solid var(--border);text-decoration:none;display:block}
+    .sb-brand span{color:var(--brand)}
+    .sb-user{padding:14px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+    .sb-avatar{width:40px;height:40px;border-radius:50%;border:2px solid var(--brand-light);background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden}
+    .sb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .sb-user-info strong{display:block;font-size:13px;font-weight:600}
+    .sb-badge{font-size:10px;color:var(--brand);font-weight:700;background:var(--brand-light);padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px}
+    .sb-nav{padding:12px 10px;flex:1}
+    .sb-section{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);padding:10px 10px 5px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover,.nav-item.active{background:var(--brand-light);color:var(--brand)}
+    .nav-item.active{font-weight:600}
+    .nav-icon{width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .nav-icon svg{width:17px;height:17px;stroke:var(--ink3);stroke-width:1.8;fill:none;transition:stroke .15s}
+    .nav-item:hover .nav-icon svg,.nav-item.active .nav-icon svg{stroke:var(--brand)}
+    .nav-badge{margin-left:auto;background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+    .sb-footer{padding:14px 12px;border-top:1px solid var(--border)}
+    /* ── Main ── */
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .icon-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .15s}
+    .icon-btn:hover{border-color:var(--brand)}
+    .icon-btn svg{width:17px;height:17px;stroke:var(--ink2);stroke-width:1.8;fill:none}
+    .notif-dot{width:8px;height:8px;background:var(--brand);border-radius:50%;position:absolute;top:4px;right:4px;border:2px solid #fff}
+    /* ── Buttons ── */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .18s;text-decoration:none;white-space:nowrap}
+    .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dark)}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}.btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+    .btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#1f5c38}
+    .btn-orange{background:var(--orange);color:#fff}
+    .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2}.btn-danger:hover{background:var(--red);color:#fff}
+    .btn-ghost{background:var(--brand-light);color:var(--brand)}
+    .btn-sm{padding:6px 13px;font-size:12.5px}
+    .btn:disabled{opacity:.6;pointer-events:none}
+    /* ── Layout ── */
+    .page-content{padding:28px;flex:1}
+    .panel{display:none}.panel.active{display:block}
+    /* ── Cards ── */
+    .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;transition:box-shadow .2s}
+    .stat-card:hover{box-shadow:var(--shadow)}
+    .stat-label{font-size:11.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .stat-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:3px}
+    .stat-sub{font-size:12px;color:var(--ink3)}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+    .section-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+    .section-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+    /* ── Pills ── */
+    .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+    .pill-green{background:var(--green-bg);color:var(--green)}
+    .pill-orange{background:var(--orange-bg);color:var(--orange)}
+    .pill-red{background:var(--red-bg);color:var(--red)}
+    .pill-blue{background:var(--brand-light);color:var(--brand)}
+    .pill-purple{background:var(--purple-bg);color:var(--purple)}
+    .pill-gray{background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+    /* ── Table ── */
+    .table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:22px}
+    table{width:100%;border-collapse:collapse}
+    thead{background:var(--bg)}
+    th{padding:11px 16px;font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;text-align:left;border-bottom:1px solid var(--border)}
+    td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#fafcff}
+    /* ── Artist Cards ── */
+    .artist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .artist-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer}
+    .artist-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+    .artist-cover{height:80px;background:linear-gradient(135deg,var(--bg),var(--border));overflow:hidden}
+    .artist-cover img{width:100%;height:100%;object-fit:cover}
+    .artist-body{padding:14px;text-align:center;margin-top:-24px}
+    .artist-avatar{width:48px;height:48px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 8px;overflow:hidden}
+    .artist-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .artist-name{font-weight:700;font-size:14px;margin-bottom:3px}
+    .artist-medium{font-size:12px;color:var(--ink3);margin-bottom:8px}
+    .artist-skills{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px}
+    .skill-chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--brand-light);color:var(--brand)}
+    /* ── Job card ── */
+    .job-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;transition:box-shadow .2s}
+    .job-card:hover{box-shadow:var(--shadow)}
+    /* ── Application card ── */
+    .app-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;transition:box-shadow .2s}
+    .app-card:hover{box-shadow:var(--shadow)}
+    /* ── Competition card ── */
+    .comp-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;transition:box-shadow .2s}
+    .comp-card:hover{box-shadow:var(--shadow)}
+    /* ── Messages ── */
+    .messages-layout{display:grid;grid-template-columns:270px 1fr;height:520px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .msg-list{border-right:1px solid var(--border);overflow-y:auto}
+    .msg-list-header{padding:13px 15px;font-weight:700;font-size:13.5px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;justify-content:space-between;align-items:center}
+    .msg-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+    .msg-item:hover,.msg-item.active{background:var(--brand-light)}
+    .msg-av{width:36px;height:36px;border-radius:9px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;overflow:hidden}
+    .msg-av img{width:100%;height:100%;object-fit:cover;border-radius:9px}
+    .msg-chat{display:flex;flex-direction:column;height:100%}
+    .msg-chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg)}
+    .msg-chat-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .bubble{max-width:72%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5}
+    .bubble.recv{background:var(--bg);border:1px solid var(--border);align-self:flex-start;border-radius:4px 12px 12px 12px}
+    .bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-radius:12px 4px 12px 12px}
+    .bubble-time{font-size:10px;color:var(--ink4);margin-top:3px}
+    .bubble.sent .bubble-time{color:rgba(255,255,255,.6)}
+    .msg-input-wrap{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .msg-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    .msg-input:focus{border-color:var(--brand)}
+    /* ── Notifications ── */
+    .notif-item{display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);transition:background .15s}
+    .notif-item:hover{background:var(--bg)}.notif-item:last-child{border-bottom:none}
+    /* ── Empty state ── */
+    .empty-state{text-align:center;padding:60px 30px}
+    .empty-state-icon{font-size:52px;margin-bottom:14px}
+    .empty-state h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:8px}
+    .empty-state p{font-size:13.5px;color:var(--ink3);max-width:320px;margin:0 auto 20px;line-height:1.6}
+    /* ── Modal ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.hidden{display:none}
+    .modal{background:var(--white);border-radius:16px;padding:30px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;animation:slideUp .25s ease}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+    .modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:5px}
+    .modal-sub{font-size:13px;color:var(--ink3);margin-bottom:22px}
+    /* ── Forms ── */
+    .form-group{margin-bottom:14px}
+    .form-group label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+    .form-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s;background:var(--white)}
+    .form-input:focus{border-color:var(--brand)}
+    .form-textarea{resize:vertical;min-height:80px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    /* ── Toast ── */
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  
+    /* ── MOBILE RESPONSIVE ────────────────────────────────── */
+    @media(max-width:768px){
+      .sidebar{ display:none !important }
+      .main{ margin-left:0 !important }
+      .topbar{ padding:0 14px; height:54px }
+      .topbar-title{ font-size:16px }
+      .page-content{ padding:14px 12px 80px 12px }
+      .stats-grid{ grid-template-columns:1fr 1fr !important; gap:10px }
+      .stats-row{ grid-template-columns:1fr 1fr !important; gap:10px }
+      .portfolio-grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important }
+      .marketplace-grid{ grid-template-columns:repeat(auto-fill,minmax(160px,1fr)) !important }
+      .artist-grid{ grid-template-columns:repeat(auto-fill,minmax(160px,1fr)) !important }
+      .tutorial-grid{ grid-template-columns:1fr !important }
+      .tut-grid{ grid-template-columns:1fr !important }
+      .messages-layout{ grid-template-columns:1fr !important; height:auto !important }
+      .msg-list{ height:200px; border-right:none !important; border-bottom:1px solid var(--border) }
+      .msg-chat{ height:400px }
+      .form-row{ grid-template-columns:1fr !important }
+      .stat-value{ font-size:20px !important }
+      .btn{ font-size:12.5px; padding:8px 14px }
+      .btn-sm{ padding:5px 10px; font-size:11.5px }
+      .topbar-right{ gap:6px }
+      .modal-overlay{ padding:0; align-items:flex-end }
+      .modal{ border-radius:16px 16px 0 0; max-height:92vh; max-width:100% !important; width:100% }
+      #ai-panel{ width:calc(100vw - 20px) !important; right:10px !important; bottom:80px !important }
+      #ai-fab{ bottom:70px !important; right:16px !important }
+      .job-card{ flex-wrap:wrap }
+      .app-card{ flex-wrap:wrap }
+      .order-item{ flex-wrap:wrap }
+      .order-card{ flex-wrap:wrap }
+      [class*="section-row"]{ flex-wrap:wrap; gap:8px }
+    }
+    .mobile-nav{
+      display:none;
+      position:fixed;
+      bottom:0;left:0;right:0;
+      background:var(--white);
+      border-top:1px solid var(--border);
+      z-index:200;
+      padding:6px 0 env(safe-area-inset-bottom,6px);
+      box-shadow:0 -4px 20px rgba(0,0,0,.08);
+    }
+    .mobile-nav-inner{
+      display:flex;align-items:center;justify-content:space-around;
+      max-width:500px;margin:0 auto;
+    }
+    .mob-nav-item{
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:6px 8px;border:none;background:none;cursor:pointer;
+      color:var(--ink3);font-size:10px;font-weight:600;
+      font-family:'DM Sans',sans-serif;border-radius:10px;
+      transition:all .15s;position:relative;min-width:48px;
+    }
+    .mob-nav-item.active{ color:var(--brand) }
+    .mob-nav-item svg{ width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none }
+    .mob-nav-badge{
+      position:absolute;top:0;right:4px;
+      min-width:16px;height:16px;
+      background:var(--brand);color:#fff;
+      font-size:9px;font-weight:700;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      padding:0 3px;
+    }
+    @media(max-width:768px){ .mobile-nav{ display:block } }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <a href="#" class="sb-brand"><span>Art</span>Craft</a>
+  <div class="sb-user">
+    <div class="sb-avatar" id="sb-avatar">🏢</div>
+    <div class="sb-user-info"><strong id="sb-name">Brand</strong><span class="sb-badge">Brand</span></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Dashboard
+    </button>
+    <div class="sb-section">Talent</div>
+    <button class="nav-item" onclick="showPanel('artists')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg></span>Find Artists
+    </button>
+    <button class="nav-item" onclick="showPanel('jobs')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>My Job Posts <span class="nav-badge" id="badge-apps" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('applications')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>Applications <span class="nav-badge" id="badge-applications" style="display:none">0</span>
+    </button>
+    <div class="sb-section">Campaigns</div>
+    <button class="nav-item" onclick="showPanel('competitions')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16M12 17v5M8 17h8"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></span>Competitions
+    </button>
+    <button class="nav-item" onclick="showPanel('payments')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Pay Artists <span class="nav-badge" id="badge-payments" style="display:none">0</span>
+    </button>
+    <div class="sb-section">Connect</div>
+    <button class="nav-item" onclick="showPanel('messages')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Messages <span class="nav-badge" id="badge-msgs" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showPanel('notifications')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications <span class="nav-badge" id="badge-notifs" style="display:none">0</span>
+    </button>
+    <div class="sb-section">Account</div>
+    <button class="nav-item" onclick="showPanel('profile')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Brand Profile
+    </button>
+  </nav>
+  <div class="sb-footer">
+    <button class="nav-item" style="color:var(--ink3)" onclick="signOut()">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+  <header class="topbar">
+    <h1 class="topbar-title" id="page-title">Dashboard</h1>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openJobModal()">+ Post a Job</button>
+      <button class="icon-btn" onclick="showPanel('notifications')">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="topbar-notif-dot" style="display:none"></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Active Job Posts</div><div class="stat-value" id="ov-jobs">0</div><div class="stat-sub">Open positions</div></div>
+        <div class="stat-card"><div class="stat-label">Applications</div><div class="stat-value" id="ov-apps">0</div><div class="stat-sub" id="ov-apps-sub">Pending review</div></div>
+        <div class="stat-card"><div class="stat-label">Artists Paid</div><div class="stat-value" id="ov-paid" style="color:var(--green)">₹0</div><div class="stat-sub">Total payments made</div></div>
+        <div class="stat-card"><div class="stat-label">Competitions</div><div class="stat-value" id="ov-comps">0</div><div class="stat-sub">Running campaigns</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+        <div>
+          <div class="section-row"><div class="section-title">Recent Applications</div><button class="btn btn-outline btn-sm" onclick="showPanel('applications')">View All</button></div>
+          <div id="ov-apps-wrap"></div>
+        </div>
+        <div>
+          <div class="section-row"><div class="section-title">Recent Messages</div></div>
+          <div id="ov-msgs-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FIND ARTISTS ── -->
+    <div class="panel" id="panel-artists">
+      <div class="section-row">
+        <div><div class="section-title">Find Artists</div><div class="section-sub" id="artists-sub">Browse &amp; hire talented Indian artists</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input class="form-input" id="artist-search" placeholder="Search by name, medium, city…" style="max-width:320px;margin-bottom:0" oninput="filterArtists()"/>
+        <select class="form-input" id="artist-medium-filter" style="max-width:200px;margin-bottom:0" onchange="filterArtists()">
+          <option value="">All Mediums</option>
+          <option>Watercolour</option><option>Acrylic</option><option>Oil</option>
+          <option>Mixed Media</option><option>Digital</option><option>Handmade Craft</option>
+        </select>
+      </div>
+      <div class="artist-grid" id="artists-grid"></div>
+    </div>
+
+    <!-- ── MY JOB POSTS ── -->
+    <div class="panel" id="panel-jobs">
+      <div class="section-row">
+        <div><div class="section-title">My Job Posts</div><div class="section-sub" id="jobs-sub">Manage your open positions</div></div>
+        <button class="btn btn-primary" onclick="openJobModal()">+ Post New Job</button>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+
+    <!-- ── APPLICATIONS ── -->
+    <div class="panel" id="panel-applications">
+      <div class="section-row">
+        <div><div class="section-title">Applications</div><div class="section-sub" id="apps-sub">Review artist applications</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm active-tab" id="tab-pending" onclick="setAppTab(this,'pending')">Pending</button>
+          <button class="btn btn-outline btn-sm" id="tab-shortlisted" onclick="setAppTab(this,'shortlisted')">Shortlisted</button>
+          <button class="btn btn-outline btn-sm" id="tab-rejected" onclick="setAppTab(this,'rejected')">Rejected</button>
+        </div>
+      </div>
+      <div id="applications-list"></div>
+    </div>
+
+    <!-- ── COMPETITIONS ── -->
+    <div class="panel" id="panel-competitions">
+      <div class="section-row">
+        <div><div class="section-title">Competitions &amp; Campaigns</div><div class="section-sub">Run creative competitions — artists compete for prizes</div></div>
+        <button class="btn btn-primary" onclick="openCompModal()">+ New Competition</button>
+      </div>
+      <div id="competitions-list"></div>
+    </div>
+
+    <!-- ── PAY ARTISTS ── -->
+    <div class="panel" id="panel-payments">
+      <div class="section-row">
+        <div><div class="section-title">Pay Artists</div><div class="section-sub">Send payments directly to artists for custom work or campaigns</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+        <div>
+          <div class="section-row"><div class="section-title" style="font-size:16px">Send Payment</div></div>
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px">
+            <div class="form-group"><label>Select Artist</label>
+              <select class="form-input" id="pay-artist-select"><option value="">-- Select Artist --</option></select>
+            </div>
+            <div class="form-group"><label>Amount (₹) *</label><input class="form-input" type="number" id="pay-amount" placeholder="e.g. 15000"/></div>
+            <div class="form-group"><label>Description / Purpose *</label><input class="form-input" id="pay-desc" placeholder="e.g. Logo design for summer campaign"/></div>
+            <div class="form-group"><label>Notes (optional)</label><textarea class="form-input form-textarea" style="min-height:60px" id="pay-notes" placeholder="Any additional instructions…"></textarea></div>
+            <div id="pay-status" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:14px"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="initPayArtist()">Send via Stripe →</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-row"><div class="section-title" style="font-size:16px">Payment History</div></div>
+          <div id="pay-history-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MESSAGES ── -->
+    <div class="panel" id="panel-messages">
+      <div class="section-row"><div class="section-title">Messages</div></div>
+      <div class="messages-layout">
+        <div class="msg-list">
+          <div class="msg-list-header"><span>Conversations</span><button class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:11px" onclick="openNewMsgModal()">+ New</button></div>
+          <div id="msg-contacts"></div>
+        </div>
+        <div class="msg-chat">
+          <div id="msg-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--ink3)">
+            <svg width="40" height="40" style="stroke:var(--ink4);stroke-width:1.5;fill:none;margin-bottom:10px" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px">Select a conversation</div>
+            <button class="btn btn-primary btn-sm" onclick="openNewMsgModal()">Message an Artist 🎨</button>
+          </div>
+          <div id="msg-chat-main" style="display:none;flex-direction:column;height:100%">
+            <div class="msg-chat-header">
+              <div class="msg-av" id="chat-avatar">🎨</div>
+              <div><strong id="chat-name">—</strong><div style="font-size:12px;color:var(--ink3)">Artist</div></div>
+              <div style="margin-left:auto"><button class="btn btn-ghost btn-sm" onclick="quickPayFromChat()">💳 Pay Artist</button></div>
+            </div>
+            <div class="msg-chat-body" id="chat-body"></div>
+            <div class="msg-input-wrap">
+              <input class="msg-input" id="msg-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()"/>
+              <button class="btn btn-primary btn-sm" onclick="sendMsg()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS ── -->
+    <div class="panel" id="panel-notifications">
+      <div class="section-row"><div class="section-title">Notifications</div><button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark All Read</button></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" id="notif-list"></div>
+    </div>
+
+    <!-- ── PROFILE ── -->
+    <div class="panel" id="panel-profile">
+      <div class="section-row"><div><div class="section-title">Brand Profile</div><div class="section-sub">Artists see this when you post jobs</div></div><button class="btn btn-primary" onclick="saveProfile()">Save Profile</button></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label>Brand / Company Name</label><input class="form-input" id="p-name" placeholder="e.g. Fabindia"/></div>
+          <div class="form-group" style="margin-bottom:0"><label>Industry</label><select class="form-input" id="p-industry"><option>Fashion & Apparel</option><option>Home Decor</option><option>Publishing</option><option>Advertising</option><option>Technology</option><option>Food & Beverage</option><option>Other</option></select></div>
+          <div class="form-group" style="margin-bottom:0"><label>City</label><input class="form-input" id="p-city"/></div>
+          <div class="form-group" style="margin-bottom:0"><label>Website</label><input class="form-input" id="p-website" placeholder="https://yoursite.com"/></div>
+          <div class="form-group" style="grid-column:span 2;margin-bottom:0"><label>About Your Brand</label><textarea class="form-input form-textarea" id="p-bio" placeholder="What kind of art do you commission? What's your aesthetic?"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-content -->
+</main>
+
+<!-- ══ MODALS ════════════════════════════════════════════════ -->
+
+<!-- POST JOB MODAL -->
+<div class="modal-overlay hidden" id="job-modal">
+  <div class="modal" style="max-width:580px">
+    <button class="modal-close" onclick="closeModal('job-modal')">✕</button>
+    <div class="modal-title" id="job-modal-title">Post a Job</div>
+    <div class="modal-sub">Reach 1,800+ verified artists</div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0"><label>Job Title *</label><input class="form-input" id="job-title" placeholder="e.g. Illustrator for Festive Campaign"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Job Type</label><select class="form-input" id="job-type"><option>Freelance</option><option>Contract</option><option>Full-time</option><option>Part-time</option></select></div>
+      <div class="form-group" style="margin-bottom:0"><label>Budget *</label><input class="form-input" id="job-budget" placeholder="e.g. ₹20,000 – ₹35,000"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Location</label><input class="form-input" id="job-location" placeholder="Remote / Mumbai / Bengaluru…"/></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label>Required Skills (comma separated)</label><input class="form-input" id="job-skills" placeholder="e.g. Watercolour, Illustration, Madhubani"/></div>
+    <div class="form-group"><label>Job Description *</label><textarea class="form-input form-textarea" id="job-desc" style="min-height:100px" placeholder="Describe the project, deliverables, and what you're looking for…"></textarea></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('job-modal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" id="job-submit-btn" onclick="submitJob()">Post Job →</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPETITION MODAL -->
+<div class="modal-overlay hidden" id="comp-modal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('comp-modal')">✕</button>
+    <div class="modal-title">Create Competition</div>
+    <div class="modal-sub">Artists submit entries — you pick a winner</div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0"><label>Competition Title *</label><input class="form-input" id="comp-title"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Category</label><select class="form-input" id="comp-category"><option>Illustration</option><option>Photography</option><option>Craft</option><option>Painting</option><option>Digital Art</option><option>Mixed Media</option></select></div>
+      <div class="form-group" style="margin-bottom:0"><label>Prize *</label><input class="form-input" id="comp-prize" placeholder="e.g. ₹50,000 + Feature"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>End Date</label><input class="form-input" type="date" id="comp-end-date"/></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label>Description *</label><textarea class="form-input form-textarea" id="comp-desc" placeholder="Theme, rules, what you're looking for…"></textarea></div>
+    <button class="btn btn-primary" style="width:100%" onclick="submitComp()">Launch Competition →</button>
+  </div>
+</div>
+
+<!-- ARTIST DETAIL MODAL -->
+<div class="modal-overlay hidden" id="artist-modal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('artist-modal')">✕</button>
+    <div id="artist-modal-content"></div>
+  </div>
+</div>
+
+<!-- NEW MESSAGE MODAL -->
+<div class="modal-overlay hidden" id="new-msg-modal">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('new-msg-modal')">✕</button>
+    <div class="modal-title">Message an Artist</div>
+    <div class="form-group"><label>Select Artist</label>
+      <select class="form-input" id="nm-artist-select"><option value="">-- Select Artist --</option></select>
+    </div>
+    <div class="form-group"><label>Message *</label><textarea class="form-input form-textarea" id="nm-body" placeholder="Hi, we'd love to collaborate…"></textarea></div>
+    <button class="btn btn-primary" style="width:100%" onclick="sendNewMessage()">Send Message →</button>
+  </div>
+</div>
+
+<!-- PAY ARTIST CONFIRM MODAL -->
+<div class="modal-overlay hidden" id="pay-confirm-modal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <button class="modal-close" onclick="closeModal('pay-confirm-modal')">✕</button>
+    <div style="font-size:56px;margin-bottom:14px">💳</div>
+    <div class="modal-title" id="pay-confirm-title">Confirm Payment</div>
+    <div style="font-size:13.5px;color:var(--ink3);margin:10px 0 22px" id="pay-confirm-sub">You are about to send…</div>
+    <div id="pay-stripe-wrap">
+      <div id="pay-card-element" style="border:1.5px solid var(--border);border-radius:8px;padding:12px;background:var(--white);margin-bottom:14px"></div>
+      <div id="pay-card-error" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('pay-confirm-modal')">Cancel</button>
+        <button class="btn btn-green" style="flex:1" id="pay-confirm-btn" onclick="confirmPayArtist()">Confirm Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API_BASE  = 'RAILWAY_URL_YAHAN';
+const STRIPE_PK = 'pk_test_51TFUEsAkOvpUa6hU6G5cJIq9DFNZ7rEpwzVGxgFIjg0Kxzdqz6qtyOAW5ehNkGwrQa5CEUHnMBEUP5J7b2s3cHOG00Rgban7QN';
+const token = localStorage.getItem('artcraft_api_token');
+const sess  = (() => { try { return JSON.parse(localStorage.getItem('artcraft_session_v1')); } catch { return null; } })();
+
+// Verify token with backend — don't trust stale localStorage
+if (!token || !sess || sess.role !== 'brand') {
+  localStorage.removeItem('artcraft_api_token');
+  localStorage.removeItem('artcraft_session_v1');
+  window.location.href = 'login.html';
+} else {
+  fetch(API_BASE + '/auth/me', {
+    headers: { Authorization: 'Bearer ' + token }
+  }).then(r => {
+    if (!r.ok) {
+      localStorage.removeItem('artcraft_api_token');
+      localStorage.removeItem('artcraft_session_v1');
+      window.location.href = 'login.html';
+    }
+  }).catch(() => {
+    // Backend unreachable — redirect to login
+    localStorage.removeItem('artcraft_api_token');
+    localStorage.removeItem('artcraft_session_v1');
+    window.location.href = 'login.html';
+  });
+}
+
+const ME_ID = sess?.userId;
+
+// ── Stripe ────────────────────────────────────────────────────
+let _stripe = null, _cardElement = null;
+function getStripe() {
+  if (!_stripe) _stripe = Stripe(STRIPE_PK);
+  return _stripe;
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function api(method, path, body = null) {
+  const headers = { Authorization: `Bearer ${token}` };
+  const opts = { method, headers };
+  if (body instanceof FormData) opts.body = body;
+  else if (body) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { signOut(); return; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+  return data;
+}
+
+function imgUrl(p) { if (!p) return null; if (p.startsWith('http')) return p; return API_BASE + p; }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; setTimeout(()=>t.style.opacity='0',3000); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function timeAgo(iso) { const d=(Date.now()-new Date(iso))/1000; if(d<60)return'just now'; if(d<3600)return Math.floor(d/60)+'m ago'; if(d<86400)return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago'; }
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); }));
+function setBadge(id,n){ const el=document.getElementById(id); if(!el)return; el.textContent=n; el.style.display=n>0?'inline-block':'none'; }
+function signOut() { api('POST','/auth/logout').finally(()=>{ localStorage.removeItem('artcraft_api_token'); localStorage.removeItem('artcraft_session_v1'); window.location.href='login.html'; }); }
+
+const panelTitles = { dashboard:'Dashboard', artists:'Find Artists', jobs:'My Job Posts', applications:'Applications', competitions:'Competitions', payments:'Pay Artists', messages:'Messages', notifications:'Notifications', profile:'Brand Profile' };
+let _myProfile = null;
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('page-title').textContent = panelTitles[name]||name;
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${name}'`))n.classList.add('active');});
+  if(name==='dashboard')   loadDashboard();
+  if(name==='artists')     loadArtists();
+  if(name==='jobs')        loadJobs();
+  if(name==='applications'){ loadApplications('pending'); setBadge('badge-applications',0); setBadge('badge-apps',0); }
+  if(name==='competitions')loadCompetitions();
+  if(name==='payments')    loadPayments();
+  if(name==='messages')    loadMessages();
+  if(name==='notifications'){ loadNotifications(); markAllReadSilent(); }
+  if(name==='profile')     loadProfile();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+async function init() {
+  try {
+    _myProfile = await api('GET', '/auth/me');
+    document.getElementById('sb-name').textContent = `${_myProfile.first_name||''} ${_myProfile.last_name||''}`.trim() || (_myProfile.name || 'Brand');
+    if (_myProfile.avatar_url) document.getElementById('sb-avatar').innerHTML = `<img src="${imgUrl(_myProfile.avatar_url)}" />`;
+    loadDashboard();
+    loadBadges();
+    loadArtistSelectOptions();
+  } catch(e) { console.error(e); }
+}
+
+async function loadBadges() {
+  try {
+    const [jobs, apps, notifs, threads] = await Promise.all([
+      api('GET','/jobs'),
+      api('GET','/jobs/applications').catch(()=>[]),
+      api('GET','/notifications').catch(()=>[]),
+      api('GET','/messages/threads').catch(()=>[]),
+    ]);
+    const myJobs = (jobs||[]).filter(j=>j.brand_id===ME_ID);
+    const myJobIds = new Set(myJobs.map(j=>j._id));
+    const pendingApps = (apps||[]).filter(a=>myJobIds.has(a.job_id)&&a.status==='pending').length;
+    const unread = (notifs||[]).filter(n=>!n.read).length;
+    const unreadMsgs = (threads||[]).reduce((s,t)=>s+(t.unread_count||0),0);
+    setBadge('badge-apps', pendingApps);
+    setBadge('badge-applications', pendingApps);
+    setBadge('badge-notifs', unread);
+    setBadge('badge-msgs', unreadMsgs);
+    document.getElementById('topbar-notif-dot').style.display = unread>0?'block':'none';
+  } catch(e) {}
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [jobs, apps, comps, payments, threads] = await Promise.all([
+      api('GET','/jobs'),
+      api('GET','/jobs/applications').catch(()=>[]),
+      api('GET','/competitions'),
+      api('GET','/payments/brand/history').catch(()=>[]),
+      api('GET','/messages/threads').catch(()=>[]),
+    ]);
+    const myJobs  = (jobs||[]).filter(j=>j.brand_id===ME_ID);
+    const myJobIds = new Set(myJobs.map(j=>j._id));
+    const myApps  = (apps||[]).filter(a=>myJobIds.has(a.job_id));
+    const myComps = (comps||[]).filter(c=>c.brand_id===ME_ID);
+    const totalPaid = (payments||[]).filter(p=>p.status==='completed').reduce((s,p)=>s+(p.amount_inr||Math.round((p.amount||0)/100)),0);
+
+    document.getElementById('ov-jobs').textContent  = myJobs.length;
+    document.getElementById('ov-apps').textContent  = myApps.length;
+    document.getElementById('ov-apps-sub').textContent = myApps.filter(a=>a.status==='pending'||a.status==='new').length + ' pending review';
+    document.getElementById('ov-paid').textContent  = `₹${totalPaid.toLocaleString('en-IN')}`;
+    document.getElementById('ov-comps').textContent = myComps.length;
+
+    // Recent applications
+    const recApps = myApps.slice(-5).reverse();
+    const appsWrap = document.getElementById('ov-apps-wrap');
+    if (!recApps.length) {
+      appsWrap.innerHTML = `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:30px;text-align:center;color:var(--ink3);font-size:13px">No applications yet. Post a job to get started!</div>`;
+    } else {
+      appsWrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+        ${recApps.map(a=>`
+          <div class="app-card">
+            <div style="width:38px;height:38px;border-radius:9px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px">🎨</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:13.5px">${esc(a.artist_name||'Artist')}</div>
+              <div style="font-size:12px;color:var(--ink3)">${esc(a.job_title||'')}</div>
+            </div>
+            <span class="pill ${a.status==='pending'?'pill-orange':a.status==='shortlisted'?'pill-green':'pill-red'}">${a.status}</span>
+          </div>`).join('')}
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:4px" onclick="showPanel('applications')">View All</button>
+      </div>`;
+    }
+
+    // Recent messages
+    const msgsWrap = document.getElementById('ov-msgs-wrap');
+    if (!(threads||[]).length) {
+      msgsWrap.innerHTML = `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;color:var(--ink3);font-size:13px">No messages yet</div>`;
+    } else {
+      msgsWrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+        ${threads.slice(0,4).map(t=>`
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px${t.unread_count?';border-left:3px solid var(--brand)':''}" onclick="showPanel('messages');setTimeout(()=>openConvo('${t.thread_id}'),100)">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🎨</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:13px">${esc(t.other_user?.name||'Artist')}</div>
+              <div style="font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.last_message?.body||'')}</div>
+            </div>
+            ${t.unread_count?`<span style="background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">${t.unread_count}</span>`:''}
+          </div>`).join('')}
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:4px" onclick="showPanel('messages')">View All</button>
+      </div>`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── FIND ARTISTS ──────────────────────────────────────────────
+let _allArtists = [];
+
+async function loadArtists() {
+  try {
+    _allArtists = await api('GET', '/artists') || [];
+    filterArtists();
+  } catch(e) { console.error(e); }
+}
+
+function filterArtists() {
+  const search = (document.getElementById('artist-search').value||'').toLowerCase();
+  const medium = document.getElementById('artist-medium-filter').value;
+  let list = _allArtists;
+  if (medium)  list = list.filter(a=>a.medium===medium);
+  if (search)  list = list.filter(a=>`${a.first_name} ${a.last_name} ${a.medium||''} ${a.city||''} ${(a.skills||[]).join(' ')}`.toLowerCase().includes(search));
+  document.getElementById('artists-sub').textContent = `${list.length} artists found`;
+  const grid = document.getElementById('artists-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-state-icon">🎨</div><h3>No artists found</h3><p>Try a different search or medium filter.</p></div></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(a=>`
+    <div class="artist-card" onclick="openArtistModal('${a._id}')">
+      <div class="artist-cover">${a.cover_url?`<img src="${imgUrl(a.cover_url)}" />`:`<div style="height:100%;background:linear-gradient(135deg,var(--brand-light),var(--border))"></div>`}</div>
+      <div class="artist-body">
+        <div class="artist-avatar">${a.avatar_url?`<img src="${imgUrl(a.avatar_url)}" />`:'🎨'}</div>
+        <div class="artist-name">${esc(a.first_name+' '+a.last_name)}</div>
+        <div class="artist-medium">${esc(a.medium||'Artist')}${a.city?' · '+esc(a.city):''}</div>
+        ${a.skills?.length?`<div class="artist-skills">${a.skills.slice(0,3).map(s=>`<span class="skill-chip">${esc(s)}</span>`).join('')}</div>`:''}
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();startMsgArtist('${a._id}','${esc(a.first_name+' '+a.last_name)}')">Message</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startPayArtist('${a._id}','${esc(a.first_name+' '+a.last_name)}')">💳 Pay</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openArtistModal(id) {
+  const a = _allArtists.find(x=>x._id===id);
+  if (!a) return;
+  document.getElementById('artist-modal-content').innerHTML = `
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:20px">
+      <div style="width:72px;height:72px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;border:3px solid var(--border)">${a.avatar_url?`<img src="${imgUrl(a.avatar_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`:' 🎨'}</div>
+      <div style="flex:1">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700">${esc(a.first_name+' '+a.last_name)}</div>
+        <div style="font-size:13px;color:var(--ink3)">${esc(a.medium||'Artist')}${a.city?' · 📍 '+esc(a.city):''}</div>
+        ${a.instagram?`<a href="https://instagram.com/${a.instagram.replace('@','')}" target="_blank" style="font-size:12px;color:var(--brand)">@${esc(a.instagram)}</a>`:''}
+      </div>
+    </div>
+    ${a.bio?`<div style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:16px;padding:14px;background:var(--bg);border-radius:8px">${esc(a.bio)}</div>`:''}
+    ${a.skills?.length?`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:8px">Skills</div><div style="display:flex;flex-wrap:wrap;gap:6px">${a.skills.map(s=>`<span class="skill-chip" style="font-size:12px;padding:4px 10px">${esc(s)}</span>`).join('')}</div></div>`:''}
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="closeModal('artist-modal');startMsgArtist('${a._id}','${esc(a.first_name+' '+a.last_name)}')">💬 Message</button>
+      <button class="btn btn-green" style="flex:1" onclick="closeModal('artist-modal');startPayArtist('${a._id}','${esc(a.first_name+' '+a.last_name)}')">💳 Pay Artist</button>
+      <button class="btn btn-outline" onclick="closeModal('artist-modal');openJobModal()">Post a Job</button>
+    </div>`;
+  openModal('artist-modal');
+}
+
+// ── JOB POSTS ─────────────────────────────────────────────────
+let _myJobs = [];
+let _editJobId = null;
+
+function openJobModal(jobId = null) {
+  _editJobId = jobId;
+  if (jobId) {
+    const j = _myJobs.find(x=>x._id===jobId);
+    if (!j) return;
+    document.getElementById('job-modal-title').textContent = 'Edit Job';
+    document.getElementById('job-title').value    = j.title||'';
+    document.getElementById('job-type').value     = j.job_type||'Freelance';
+    document.getElementById('job-budget').value   = j.budget||'';
+    document.getElementById('job-location').value = j.location||'';
+    document.getElementById('job-skills').value   = (j.skills||[]).join(', ');
+    document.getElementById('job-desc').value     = j.desc||'';
+  } else {
+    document.getElementById('job-modal-title').textContent = 'Post a Job';
+    ['job-title','job-budget','job-location','job-skills','job-desc'].forEach(id=>document.getElementById(id).value='');
+  }
+  openModal('job-modal');
+}
+
+async function submitJob() {
+  const title  = document.getElementById('job-title').value.trim();
+  const budget = document.getElementById('job-budget').value.trim();
+  const desc   = document.getElementById('job-desc').value.trim();
+  if (!title||!budget||!desc) { showToast('Title, budget and description required'); return; }
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('job_type', document.getElementById('job-type').value);
+  fd.append('budget', budget);
+  fd.append('location', document.getElementById('job-location').value.trim());
+  fd.append('skills', document.getElementById('job-skills').value.trim());
+  fd.append('desc', desc);
+
+  const btn = document.getElementById('job-submit-btn');
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    if (_editJobId) {
+      await api('PUT', `/jobs/${_editJobId}`, fd);
+      showToast('Job updated ✓');
+    } else {
+      await api('POST', '/jobs', fd);
+      showToast('Job posted! Artists can now apply ✓');
+    }
+    closeModal('job-modal');
+    loadJobs(); loadDashboard(); loadBadges();
+  } catch(e) { showToast(e.message); }
+  finally { btn.disabled=false; btn.innerHTML='Post Job →'; }
+}
+
+async function loadJobs() {
+  try {
+    _myJobs = (await api('GET','/jobs')||[]).filter(j=>j.brand_id===ME_ID);
+    document.getElementById('jobs-sub').textContent = `${_myJobs.length} job posts`;
+    const wrap = document.getElementById('jobs-list');
+    if (!_myJobs.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💼</div><h3>No jobs posted yet</h3><p>Post your first job and start receiving applications from talented artists!</p><button class="btn btn-primary" onclick="openJobModal()">+ Post Your First Job</button></div>`;
+      return;
+    }
+    // Attach real application counts
+    const allApps = await api('GET', '/jobs/applications').catch(() => []);
+    const appCountMap = {};
+    (allApps || []).forEach(a => { appCountMap[a.job_id] = (appCountMap[a.job_id] || 0) + 1; });
+    _myJobs.forEach(j => j._app_count = appCountMap[j._id] || 0);
+
+    wrap.innerHTML = _myJobs.map(j=>`
+      <div class="job-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;margin-bottom:4px">${esc(j.title)}</div>
+            <div style="font-size:13px;color:var(--ink3);margin-bottom:8px">${esc(j.job_type)} · ${esc(j.location||'Remote')} · <strong style="color:var(--brand)">${esc(j.budget)}</strong></div>
+            ${j.skills?.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${j.skills.map(s=>`<span class="pill pill-gray" style="font-size:11px">${esc(s)}</span>`).join('')}</div>`:''}
+            <div style="font-size:12.5px;color:var(--ink2)">${esc((j.desc||'').slice(0,120))}${(j.desc||'').length>120?'…':''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0">
+            <span class="pill pill-green">Active</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline btn-sm" onclick="openJobModal('${j._id}')">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteJob('${j._id}')">Delete</button>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="showPanel('applications')">View Applications</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:12.5px;color:var(--ink3)">
+          <span>📋 ${j._app_count||j.application_count||0} applications</span>
+          <span>📅 ${new Date(j.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job post? All applications will be removed.')) return;
+  try {
+    await api('DELETE', `/jobs/${id}`);
+    showToast('Job deleted');
+    loadJobs(); loadDashboard();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── APPLICATIONS ──────────────────────────────────────────────
+let _appTab = 'pending';
+
+function setAppTab(btn, tab) {
+  document.querySelectorAll('#panel-applications .btn-outline').forEach(b=>b.style.background='');
+  btn.style.background = 'var(--brand-light)';
+  btn.style.borderColor = 'var(--brand)';
+  btn.style.color = 'var(--brand)';
+  _appTab = tab;
+  loadApplications(tab);
+}
+
+async function loadApplications(status) {
+  try {
+    const [apps, jobs] = await Promise.all([
+      api('GET','/jobs/applications').catch(()=>[]),
+      api('GET','/jobs'),
+    ]);
+    const myJobIds = new Set((jobs||[]).filter(j=>j.brand_id===ME_ID).map(j=>j._id));
+    const normalise = s => (s === 'new' ? 'pending' : s);
+    const filtered = (apps||[]).filter(a=>myJobIds.has(a.job_id) && normalise(a.status)===status);
+    document.getElementById('apps-sub').textContent = `${filtered.length} ${status} applications`;
+    const wrap = document.getElementById('applications-list');
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No ${status} applications</h3><p>${status==='pending'?'New applications will appear here.':''}</p></div>`;
+      return;
+    }
+    // Group by job
+    const byJob = {};
+    filtered.forEach(a => {
+      if (!byJob[a.job_id]) byJob[a.job_id] = { title: a.job_title, apps: [] };
+      byJob[a.job_id].apps.push(a);
+    });
+    wrap.innerHTML = Object.entries(byJob).map(([jobId, group]) => `
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden">
+        <div style="padding:12px 18px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:14px">💼 ${esc(group.title)} <span style="font-weight:400;color:var(--ink3);font-size:13px">(${group.apps.length} applicants)</span></span>
+          <button class="btn btn-outline btn-sm" onclick="downloadJobAppsExcel('${esc(group.title)}','${jobId}')" style="padding:4px 10px;font-size:11px">⬇ Export Excel</button>
+        </div>
+        ${group.apps.map(a=>`
+        <div class="app-card" style="border-radius:0;border-left:none;border-right:none;border-top:none">
+          <div style="width:46px;height:46px;border-radius:10px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎨</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">${esc(a.artist_name||'Artist')}</div>
+            <div style="font-size:12.5px;color:var(--ink3);margin-bottom:4px">${esc(a.medium||'')}${a.city?' · 📍'+esc(a.city):''} · ${timeAgo(a.applied_at)}</div>
+            ${a.message?`<div style="font-size:13px;color:var(--ink2);padding:9px 12px;background:var(--bg);border-radius:7px;line-height:1.6">"${esc(a.message)}"</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;align-items:flex-end;flex-shrink:0">
+            <span class="pill ${a.status==='pending'?'pill-orange':a.status==='shortlisted'?'pill-green':'pill-red'}">${a.status}</span>
+            ${normalise(a.status)==='pending'?`
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-green btn-sm" onclick="updateApp('${a._id}','shortlisted')">Shortlist ✓</button>
+                <button class="btn btn-danger btn-sm" onclick="updateApp('${a._id}','rejected')">Reject</button>
+              </div>`:''}
+            <button class="btn btn-ghost btn-sm" onclick="startMsgArtist('${a.artist_id}','${esc(a.artist_name||'Artist')}')">Message</button>
+          </div>
+        </div>`).join('')}
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function downloadJobAppsExcel(jobTitle, jobId) {
+  try {
+    const apps = await api('GET', `/jobs/${jobId}/applications`) || [];
+    if (!apps.length) { showToast('No applications to export'); return; }
+    const rows = [['#', 'Artist Name', 'Medium', 'City', 'Message', 'Status', 'Applied At']];
+    apps.forEach((a,i) => rows.push([
+      i+1,
+      a.artist_name||'',
+      a.medium||'',
+      a.city||'',
+      a.message||'',
+      a.status||'',
+      a.applied_at ? new Date(a.applied_at).toLocaleString('en-IN') : ''
+    ]));
+    downloadAsExcel(rows, `applications_${jobTitle.replace(/\s+/g,'_').slice(0,30)}`);
+  } catch(e) { showToast('Export failed: ' + e.message); }
+}
+
+// ── Excel Download Utility ────────────────────────────────────
+function downloadAsExcel(rows, filename) {
+  // Always wrap every cell in quotes to prevent split on spaces/commas
+  const csvContent = rows.map(r =>
+    r.map(cell => {
+      const s = String(cell == null ? '' : cell).replace(/"/g, '""');
+      return `"${s}"`;   // ALWAYS quoted — prevents any column splitting
+    }).join(',')
+  ).join('\r\n');
+  const BOM = '\uFEFF'; // UTF-8 BOM for Excel Hindi/Marathi support
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✓ Downloaded — open with Excel');
+}
+
+async function updateApp(id, status) {
+  try {
+    const fd = new FormData(); fd.append('status', status);
+    await api('PUT', `/jobs/applications/${id}/status`, fd);
+    showToast(status==='shortlisted' ? '✓ Shortlisted!' : 'Application rejected');
+    loadApplications(_appTab); loadBadges();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── COMPETITIONS ──────────────────────────────────────────────
+async function loadCompetitions() {
+  try {
+    const brandId = ME_ID || (sess && sess.userId);
+    // Fetch ALL competitions (no status filter)
+    const all = await api('GET', '/competitions?status=') || [];
+    const mine = all.filter(c => String(c.brand_id) === String(brandId));
+
+    const wrap = document.getElementById('competitions-list');
+    if (!mine.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏆</div><h3>No competitions yet</h3><p>Create a competition and let artists compete for prizes!</p><button class="btn btn-primary" onclick="openCompModal()">+ Create Your First Competition</button></div>`;
+      return;
+    }
+
+    // Fetch registrations for each competition in parallel
+    const regResults = await Promise.all(
+      mine.map(c => api('GET', `/competitions/${c._id}/registrations`).catch(() => []))
+    );
+    window._compRegResults = regResults;
+    window._compMine = mine;
+
+    wrap.innerHTML = mine.map((c, i) => {
+      const daysLeft = c.end_date ? Math.max(0, Math.ceil((new Date(c.end_date) - Date.now()) / 86400000)) : null;
+      const regs = regResults[i] || [];
+      const statusLabel = daysLeft === null ? 'Active' : daysLeft > 0 ? 'Running' : 'Ended';
+      const statusColor = (daysLeft === null || daysLeft > 0) ? 'pill-green' : 'pill-gray';
+      return `
+        <div class="comp-card" style="flex-direction:column;gap:0;margin-bottom:16px">
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <div style="width:50px;height:50px;border-radius:12px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏆</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:15px;margin-bottom:4px">${esc(c.title)}</div>
+              <div style="font-size:13px;color:var(--ink3);margin-bottom:6px">Category: ${esc(c.category)} · Prize: <strong style="color:var(--orange)">${esc(c.prize)}</strong></div>
+              <div style="font-size:12.5px;color:var(--ink3);margin-bottom:6px">
+                ${daysLeft !== null ? `⏰ ${daysLeft > 0 ? daysLeft + ' days left' : 'Ended'} · ` : ''}
+                👥 <strong>${regs.length}</strong> ${regs.length === 1 ? 'registration' : 'registrations'}
+              </div>
+              ${c.desc ? `<div style="font-size:13px;color:var(--ink2)">${esc(c.desc.slice(0,130))}${c.desc.length>130?'…':''}</div>` : ''}
+            </div>
+            <span class="pill ${statusColor}" style="flex-shrink:0">${statusLabel}</span>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            ${regs.length > 0 ? `
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <span style="font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em">Registered Artists (${regs.length})</span>
+                <button class="btn btn-outline btn-sm" onclick="downloadCompEntriesExcel('${esc(c.title)}', ${i})" style="padding:4px 11px;font-size:11px">⬇ Export Excel</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
+                ${regs.map((r, ri) => `
+                  <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border-radius:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--brand);flex-shrink:0">${ri + 1}</div>
+                    <div style="flex:1;font-size:13px;font-weight:700">${esc(r.artist_name || 'Artist')}</div>
+                    <div style="font-size:11.5px;color:var(--ink3)">${r.registered_at ? timeAgo(r.registered_at) : ''}</div>
+                  </div>`).join('')}
+              </div>
+            ` : `<div style="font-size:13px;color:var(--ink3);text-align:center;padding:10px">No registrations yet</div>`}
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) { console.error('loadCompetitions:', e); showToast('Error loading competitions'); }
+}
+
+function downloadCompEntriesExcel(compTitle, idx) {
+  const regs = (window._compRegResults || [])[idx] || [];
+  if (!regs.length) { showToast('No entries to export'); return; }
+  const comp = (window._compMine || [])[idx] || {};
+  const rows = [['#', 'Artist Name', 'Competition', 'Prize', 'Registered At']];
+  regs.forEach((r, i) => rows.push([
+    i + 1,
+    r.artist_name || '',
+    compTitle,
+    comp.prize || '',
+    r.registered_at ? new Date(r.registered_at).toLocaleString('en-IN') : ''
+  ]));
+  downloadAsExcel(rows, `competition_entries_${compTitle.replace(/\s+/g,'_').slice(0,30)}`);
+}
+
+function openCompModal() {
+  ['comp-title','comp-prize','comp-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('comp-end-date').value='';
+  openModal('comp-modal');
+}
+
+async function submitComp() {
+  const title = document.getElementById('comp-title').value.trim();
+  const prize = document.getElementById('comp-prize').value.trim();
+  const desc  = document.getElementById('comp-desc').value.trim();
+  if (!title||!prize||!desc) { showToast('Title, prize and description required'); return; }
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('category', document.getElementById('comp-category').value);
+  fd.append('prize', prize);
+  fd.append('end_date', document.getElementById('comp-end-date').value);
+  fd.append('desc', desc);
+  try {
+    await api('POST', '/competitions', fd);
+    closeModal('comp-modal');
+    showToast('Competition launched! ✓');
+    loadCompetitions();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── PAY ARTISTS ───────────────────────────────────────────────
+let _payClientSecret = null, _payArtistName = '';
+
+async function loadArtistSelectOptions() {
+  try {
+    const artists = await api('GET', '/artists') || [];
+    ['pay-artist-select','nm-artist-select'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Select Artist --</option>' + artists.map(a=>`<option value="${a._id}">${esc(a.first_name+' '+a.last_name)}</option>`).join('');
+    });
+  } catch(e) {}
+}
+
+async function loadPayments() {
+  try {
+    const history = await api('GET', '/payments/brand/history') || [];
+    const histWrap = document.getElementById('pay-history-wrap');
+    const totalPaidINR = history.filter(p=>p.status==='completed').reduce((s,p)=>s+(p.amount_inr||Math.round((p.amount||0)/100)),0);
+    document.getElementById('ov-paid').textContent = `₹${totalPaidINR.toLocaleString('en-IN')}`;
+    if (!history.length) {
+      histWrap.innerHTML = `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;color:var(--ink3);font-size:13px">No payments sent yet</div>`;
+    } else {
+      histWrap.innerHTML = `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+        <div style="padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;font-weight:700;color:var(--ink3)">ALL PAYMENTS</span>
+          <button class="btn btn-outline btn-sm" onclick="downloadPaymentsExcel()" style="padding:4px 10px;font-size:11px">⬇ Export Excel</button>
+        </div>
+        ${history.map(p=>{
+          const amtINR = p.amount_inr || Math.round((p.amount||0)/100);
+          return `
+          <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:9px;background:${p.status==='completed'?'var(--green-bg)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${p.status==='completed'?'💸':'⏳'}</div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">${esc(p.artist_name||'Artist')}</div>
+              <div style="font-size:12px;color:var(--ink3)">${esc(p.desc||'')} · ${timeAgo(p.created_at)}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700;color:var(--green);font-family:'Playfair Display',serif;font-size:15px">₹${amtINR.toLocaleString('en-IN')}</div>
+              <span style="font-size:10.5px;font-weight:600;padding:2px 6px;border-radius:10px;background:${p.status==='completed'?'var(--green-bg)':'var(--bg)'};color:${p.status==='completed'?'var(--green)':'var(--ink3)'}">${p.status}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+function downloadPaymentsExcel() {
+  api('GET', '/payments/brand/history').then(history => {
+    if (!history?.length) { showToast('No payments to export'); return; }
+    const rows = [['#', 'Artist Name', 'Description', 'Notes', 'Amount (INR)', 'Status', 'Date']];
+    history.forEach((p, i) => {
+      const amtINR = p.amount_inr || Math.round((p.amount || 0) / 100);
+      rows.push([
+        i + 1,
+        p.artist_name || '',
+        p.desc || '',
+        p.notes || '',
+        amtINR,
+        p.status || '',
+        p.created_at ? new Date(p.created_at).toLocaleString('en-IN') : ''
+      ]);
+    });
+    downloadAsExcel(rows, 'artcraft_payments_history');
+  });
+}
+
+function startPayArtist(artistId, name) {
+  document.getElementById('pay-artist-select').value = artistId;
+  document.getElementById('pay-desc').value = '';
+  document.getElementById('pay-amount').value = '';
+  _payArtistName = name;
+  showPanel('payments');
+}
+
+async function initPayArtist() {
+  const artistId = document.getElementById('pay-artist-select').value;
+  const amount   = document.getElementById('pay-amount').value.trim();
+  const desc     = document.getElementById('pay-desc').value.trim();
+  const notes    = document.getElementById('pay-notes').value.trim();
+  if (!artistId) { showToast('Select an artist'); return; }
+  if (!amount || Number(amount) <= 0) { showToast('Enter a valid amount'); return; }
+  if (!desc)     { showToast('Enter a description'); return; }
+
+  const statusEl = document.getElementById('pay-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'var(--brand-light)';
+  statusEl.style.color = 'var(--brand)';
+  statusEl.textContent = '⏳ Preparing payment…';
+
+  const fd = new FormData();
+  fd.append('artist_id', artistId);
+  fd.append('amount', Math.round(Number(amount) * 100)); // paise (INR × 100)
+  fd.append('desc', desc);
+  fd.append('notes', notes);
+
+  try {
+    const res = await api('POST', '/payments/brand/pay-artist', fd);
+    _payClientSecret = res.client_secret;
+    const selectedArtistName = document.getElementById('pay-artist-select').options[document.getElementById('pay-artist-select').selectedIndex]?.text || 'Artist';
+
+    document.getElementById('pay-confirm-title').textContent = `Pay ₹${Number(amount).toLocaleString('en-IN')}`;
+    document.getElementById('pay-confirm-sub').textContent   = `To: ${selectedArtistName} · For: ${desc}`;
+    statusEl.style.display = 'none';
+
+    // Setup Stripe Elements
+    const stripe = getStripe();
+    const elements = stripe.elements();
+    if (_cardElement) _cardElement.destroy();
+    _cardElement = elements.create('card', {
+      style: { base: { fontFamily:'DM Sans, sans-serif', fontSize:'15px', color:'#1a1a1a' } }
+    });
+    _cardElement.mount('#pay-card-element');
+    _cardElement.on('change', e => {
+      const errEl = document.getElementById('pay-card-error');
+      if (e.error) { errEl.textContent = e.error.message; errEl.style.display='block'; }
+      else errEl.style.display='none';
+    });
+    openModal('pay-confirm-modal');
+  } catch(e) {
+    statusEl.style.background='var(--red-bg)';
+    statusEl.style.color='var(--red)';
+    statusEl.textContent = '❌ ' + e.message;
+  }
+}
+
+async function confirmPayArtist() {
+  if (!_payClientSecret || !_cardElement) return;
+  const btn = document.getElementById('pay-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  const stripe = getStripe();
+  try {
+    const { error, paymentIntent } = await stripe.confirmCardPayment(_payClientSecret, {
+      payment_method: { card: _cardElement }
+    });
+    if (error) throw new Error(error.message);
+
+    // Confirm on backend
+    const fd = new FormData();
+    fd.append('payment_intent_id', paymentIntent.id);
+    await api('POST', '/payments/brand/confirm', fd);
+
+    closeModal('pay-confirm-modal');
+    showToast('✅ Payment sent successfully!');
+    loadPayments();
+    // Reset form
+    document.getElementById('pay-amount').value='';
+    document.getElementById('pay-desc').value='';
+    document.getElementById('pay-notes').value='';
+  } catch(e) {
+    document.getElementById('pay-card-error').textContent = e.message;
+    document.getElementById('pay-card-error').style.display = 'block';
+  }
+  finally { btn.disabled=false; btn.textContent='Confirm Payment'; }
+}
+
+// ── MESSAGES ──────────────────────────────────────────────────
+let _threads = [], _activeThread = null;
+
+async function loadMessages() {
+  try {
+    _threads = await api('GET', '/messages/threads') || [];
+    const listEl = document.getElementById('msg-contacts');
+    if (!_threads.length) {
+      listEl.innerHTML = `<div style="padding:18px;text-align:center;color:var(--ink3);font-size:13px">No messages yet.<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openNewMsgModal()">Message Artist</button></div>`;
+      return;
+    }
+    listEl.innerHTML = _threads.map(t=>`
+      <div class="msg-item ${_activeThread===t.thread_id?'active':''}" onclick="openConvo('${t.thread_id}')">
+        <div class="msg-av">${t.other_user?.avatar_url?`<img src="${imgUrl(t.other_user.avatar_url)}" />`:'🎨'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600;font-size:13px">${esc(t.other_user?.name||'Artist')}</span><span style="font-size:11px;color:var(--ink3)">${t.last_message?timeAgo(t.last_message.created_at):''}</span></div>
+          <div style="font-size:12px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.last_message?.body||'')}</div>
+        </div>
+        ${t.unread_count?`<span style="width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:5px;flex-shrink:0;display:block"></span>`:''}
+      </div>`).join('');
+    setBadge('badge-msgs', _threads.reduce((s,t)=>s+(t.unread_count||0),0));
+  } catch(e) { console.error(e); }
+}
+
+async function openConvo(threadId) {
+  _activeThread = threadId;
+  const thread = _threads.find(t=>t.thread_id===threadId);
+  try {
+    const msgs = await api('GET', `/messages/thread/${threadId}`);
+    document.getElementById('msg-placeholder').style.display = 'none';
+    document.getElementById('msg-chat-main').style.display = 'flex';
+    document.getElementById('chat-name').textContent = thread?.other_user?.name || 'Artist';
+    const av = thread?.other_user?.avatar_url;
+    document.getElementById('chat-avatar').innerHTML = av?`<img src="${imgUrl(av)}" style="width:100%;height:100%;object-fit:cover;border-radius:9px"/>`:'🎨';
+    const body = document.getElementById('chat-body');
+    body.innerHTML = (msgs||[]).map(m=>{
+      const isMine = m.from_id === ME_ID;
+      return `<div class="bubble ${isMine?'sent':'recv'}">${esc(m.body)}<div class="bubble-time">${new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    }).join('');
+    body.scrollTop = 9999;
+    // Clear message badge for this thread
+    const t2 = _threads.find(t=>t.thread_id===threadId);
+    if (t2) t2.unread_count = 0;
+    const totalUnread = _threads.reduce((s,t)=>s+(t.unread_count||0),0);
+    setBadge('badge-msgs', totalUnread);
+    loadMessages();
+  } catch(e) { showToast(e.message); }
+}
+
+async function sendMsg() {
+  if (!_activeThread) return;
+  const input = document.getElementById('msg-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const thread = _threads.find(t=>t.thread_id===_activeThread);
+  const recipId = thread?.other_user?.id;
+  if (!recipId) return;
+  try {
+    const fd = new FormData(); fd.append('recipient_id',recipId); fd.append('body',val);
+    await api('POST','/messages/send',fd);
+    input.value='';
+    openConvo(_activeThread);
+  } catch(e) { showToast(e.message); }
+}
+
+function quickPayFromChat() {
+  const thread = _threads.find(t=>t.thread_id===_activeThread);
+  if (!thread?.other_user?.id) return;
+  startPayArtist(thread.other_user.id, thread.other_user.name||'Artist');
+}
+
+async function openNewMsgModal() {
+  await loadArtistSelectOptions();
+  document.getElementById('nm-body').value='';
+  openModal('new-msg-modal');
+}
+
+async function sendNewMessage() {
+  const artistId = document.getElementById('nm-artist-select').value;
+  const body     = document.getElementById('nm-body').value.trim();
+  if (!artistId) { showToast('Select an artist'); return; }
+  if (!body)     { showToast('Write a message'); return; }
+  try {
+    const fd = new FormData(); fd.append('recipient_id',artistId); fd.append('body',body);
+    await api('POST','/messages/send',fd);
+    closeModal('new-msg-modal');
+    showToast('Message sent ✓');
+    showPanel('messages');
+    setTimeout(loadMessages, 300);
+  } catch(e) { showToast(e.message); }
+}
+
+async function startMsgArtist(artistId, name) {
+  const fd = new FormData();
+  fd.append('recipient_id', artistId);
+  fd.append('body', `Hi ${name}, I'd love to discuss a collaboration!`);
+  try {
+    await api('POST', '/messages/send', fd);
+    showPanel('messages');
+    setTimeout(async ()=>{
+      await loadMessages();
+      const t = _threads.find(th=>th.other_user?.id===artistId);
+      if (t) openConvo(t.thread_id);
+    }, 300);
+  } catch(e) { showToast(e.message); }
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────
+async function loadNotifications() {
+  try {
+    const notifs = await api('GET','/notifications')||[];
+    const wrap = document.getElementById('notif-list');
+    if (!notifs.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>`;
+      return;
+    }
+    wrap.innerHTML = notifs.slice(0,30).map(n=>`
+      <div class="notif-item">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div style="flex:1"><p style="font-size:13.5px;color:var(--ink2)">${esc(n.text)}</p><div style="font-size:11.5px;color:var(--ink3);margin-top:3px">${timeAgo(n.created_at)}</div></div>
+        ${!n.read?'<div style="width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:6px;flex-shrink:0"></div>':''}
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function markAllRead() {
+  try { await api('PUT','/notifications/read-all'); loadNotifications(); loadBadges(); showToast('All notifications marked as read'); } catch(e) {}
+}
+
+async function markAllReadSilent() {
+  try { await api('PUT','/notifications/read-all'); setBadge('badge-notifs',0); document.getElementById('topbar-notif-dot').style.display='none'; } catch(e) {}
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+async function loadProfile() {
+  if (!_myProfile) _myProfile = await api('GET','/auth/me');
+  const p = _myProfile;
+  document.getElementById('p-name').value    = p.brand_name || `${p.first_name||''} ${p.last_name||''}`.trim() || '';
+  document.getElementById('p-city').value    = p.city || '';
+  document.getElementById('p-website').value = p.website || '';
+  document.getElementById('p-bio').value     = p.bio || '';
+  if (p.industry) document.getElementById('p-industry').value = p.industry;
+}
+
+async function saveProfile() {
+  const fd = new FormData();
+  fd.append('brand_name', document.getElementById('p-name').value.trim());
+  fd.append('city',       document.getElementById('p-city').value.trim());
+  fd.append('website',    document.getElementById('p-website').value.trim());
+  fd.append('bio',        document.getElementById('p-bio').value.trim());
+  fd.append('industry',   document.getElementById('p-industry').value);
+  try {
+    _myProfile = await api('PUT','/profile',fd);
+    document.getElementById('sb-name').textContent = _myProfile.brand_name || `${_myProfile.first_name||''} ${_myProfile.last_name||''}`.trim();
+    showToast('Profile saved ✓');
+  } catch(e) { showToast(e.message); }
+}
+
+// ── START ─────────────────────────────────────────────────────
+init();
+setInterval(loadBadges, 30000);
+</script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-nav-item active" onclick="showPanel('dashboard');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('artists');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>Artists
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('applications');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Apply
+      <span class="mob-nav-badge" id="mob-badge-apps" style="display:none">0</span>
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('messages');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages
+      <span class="mob-nav-badge" id="mob-badge-msgs" style="display:none">0</span>
+    </button>
+    <button class="mob-nav-item" onclick="toggleMobileMenu()">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>More
+    </button>
+  </div>
+</nav>
+<div id="mobile-menu-drawer" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.4)" onclick="if(event.target===this)toggleMobileMenu()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:var(--white);border-radius:20px 20px 0 0;padding:20px 16px 40px">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="showPanel('jobs');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--brand);stroke-width:1.8;fill:none"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Jobs</button>
+      <button onclick="showPanel('competitions');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>Contests</button>
+      <button onclick="showPanel('payments');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--brand);stroke-width:1.8;fill:none"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Payments</button>
+      <button onclick="showPanel('notifications');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Alerts</button>
+      <button onclick="showPanel('profile');toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+      <button onclick="openJobModal();toggleMobileMenu()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:none;border-radius:10px;background:var(--brand);font-size:13px;font-weight:600;color:#fff;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" style="stroke:#fff;stroke-width:1.8;fill:none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Post Job</button>
+    </div>
+    <button onclick="signOut()" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--red-bg);border-radius:10px;background:var(--red-bg);font-size:13px;font-weight:600;color:var(--red);cursor:pointer;width:100%;margin-top:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" style="stroke:var(--red);stroke-width:1.8;fill:none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out
+    </button>
+  </div>
+</div>
+<script>
+function setMobActive(btn) {
+  document.querySelectorAll('.mob-nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function toggleMobileMenu() {
+  const d=document.getElementById('mobile-menu-drawer');
+  d.style.display=d.style.display==='none'?'block':'none';
+}
+const _origSetBadge=setBadge;
+function setBadge(id,n){
+  _origSetBadge(id,n);
+  const m={'badge-apps':'mob-badge-apps','badge-msgs':'mob-badge-msgs'};
+  if(m[id]){const el=document.getElementById(m[id]);if(el){el.textContent=n;el.style.display=n>0?'flex':'none';}}
+}
+</script>
+
+</body>
+</html>

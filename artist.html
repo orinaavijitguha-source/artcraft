@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Artist Dashboard — ArtCraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--brand:#b5631a;--brand-light:#fff3e8;--brand-dark:#8a4a12;--ink:#1a1a1a;--ink2:#444;--ink3:#888;--ink4:#bbb;--border:#ede9e2;--bg:#faf9f6;--white:#fff;--green:#2a7a4b;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fdecea;--blue:#1a6eb5;--blue-bg:#e8f0fd;--sidebar-w:240px;--r:12px;--shadow:0 2px 12px rgba(0,0,0,.07)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+    .sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+    .sb-brand{padding:22px 20px 18px;font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--ink);border-bottom:1px solid var(--border);text-decoration:none;display:block}
+    .sb-brand span{color:var(--brand)}
+    .sb-user{padding:14px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+    .sb-avatar-wrap{position:relative;flex-shrink:0;cursor:pointer}
+    .sb-avatar{width:40px;height:40px;border-radius:50%;border:2px solid var(--brand-light);background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden}
+    .sb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .sb-avatar-edit{position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:var(--brand);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center}
+    .sb-avatar-edit svg{width:8px;height:8px;stroke:#fff;stroke-width:2;fill:none}
+    .sb-user-info strong{display:block;font-size:13px;font-weight:600}
+    .sb-badge{font-size:10px;color:var(--brand);font-weight:700;background:var(--brand-light);padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px}
+    .sb-nav{padding:12px 10px;flex:1}
+    .sb-section{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);padding:10px 10px 5px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover,.nav-item.active{background:var(--brand-light);color:var(--brand)}
+    .nav-item.active{font-weight:600}
+    .nav-item:hover svg,.nav-item.active svg{stroke:var(--brand)}
+    .nav-icon{width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .nav-icon svg{width:17px;height:17px;stroke:var(--ink3);stroke-width:1.8;fill:none;transition:stroke .15s}
+    .nav-badge{margin-left:auto;background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+    .sb-footer{padding:14px 12px;border-top:1px solid var(--border)}
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .icon-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .15s}
+    .icon-btn:hover{border-color:var(--brand)}
+    .icon-btn svg{width:17px;height:17px;stroke:var(--ink2);stroke-width:1.8;fill:none}
+    .notif-dot{width:8px;height:8px;background:var(--brand);border-radius:50%;position:absolute;top:4px;right:4px;border:2px solid #fff}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
+    .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dark)}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}.btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+    .btn-ghost{background:var(--brand-light);color:var(--brand)}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2}
+    .btn-sm{padding:6px 13px;font-size:12.5px}
+    .btn:disabled{opacity:.6;pointer-events:none}
+    .page-content{padding:28px;flex:1}
+    .panel{display:none}.panel.active{display:block}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+    .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;transition:box-shadow .2s}
+    .stat-card:hover{box-shadow:var(--shadow)}
+    .stat-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .stat-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:4px}
+    .stat-sub{font-size:12px;color:var(--ink3)}
+    .section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .section-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+    .section-sub{font-size:13px;color:var(--ink3);margin-top:2px}
+    .tabs{display:flex;gap:4px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:4px;width:fit-content;margin-bottom:22px}
+    .tab{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink3);transition:all .15s;border:none;background:transparent}
+    .tab.active{background:var(--brand);color:#fff}
+    .portfolio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:26px}
+    .art-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform .2s,box-shadow .2s}
+    .art-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+    .art-thumb{width:100%;height:160px;object-fit:cover;display:block}
+    .art-thumb-ph{width:100%;height:160px;background:linear-gradient(135deg,#f5f0eb,#ede9e2);display:flex;align-items:center;justify-content:center;font-size:48px}
+    .art-info{padding:12px 14px}
+    .art-title{font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .art-price{font-size:13px;font-weight:700;color:var(--brand)}
+    .art-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:4px}
+    .art-status.listed{background:var(--green-bg);color:var(--green)}
+    .art-status.draft{background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+    .art-status.sold{background:var(--blue-bg);color:var(--blue)}
+    .art-actions{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border)}
+    .add-card{background:var(--white);border:2px dashed var(--border);border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;height:240px;cursor:pointer;transition:border-color .2s,background .2s}
+    .add-card:hover{border-color:var(--brand);background:var(--brand-light)}
+    .add-card p{font-size:13px;color:var(--ink3);font-weight:600;margin-top:8px}
+    .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+    .pill-green{background:var(--green-bg);color:var(--green)}
+    .pill-orange{background:var(--brand-light);color:var(--brand)}
+    .pill-blue{background:var(--blue-bg);color:var(--blue)}
+    .pill-red{background:var(--red-bg);color:var(--red)}
+    .pill-gray{background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+    .table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:22px}
+    table{width:100%;border-collapse:collapse}
+    thead{background:var(--bg)}
+    th{padding:11px 16px;font-size:11.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;text-align:left;border-bottom:1px solid var(--border)}
+    td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#fdfcfb}
+    .job-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;display:flex;align-items:flex-start;gap:16px;transition:box-shadow .2s;margin-bottom:12px}
+    .job-card:hover{box-shadow:var(--shadow)}
+    .tutorial-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .tut-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform .2s,box-shadow .2s}
+    .tut-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+    .tut-thumb{width:100%;height:160px;background:linear-gradient(135deg,#f5f0eb,#ede9e2);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;cursor:pointer;overflow:hidden}
+    .tut-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .tut-play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35)}
+    .tut-play-btn{width:48px;height:48px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .tut-play-btn svg{width:20px;height:20px;stroke:var(--brand);stroke-width:2;fill:none;margin-left:3px}
+    .tut-body{padding:14px 16px}
+    .tut-title{font-weight:700;font-size:14px;margin-bottom:6px}
+    .tut-stats{display:flex;gap:14px;font-size:12px;color:var(--ink3);margin-bottom:10px}
+    .order-item{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:box-shadow .2s}
+    .order-item:hover{box-shadow:var(--shadow)}
+    .order-thumb{width:52px;height:52px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden}
+    .order-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+    .messages-layout{display:grid;grid-template-columns:280px 1fr;height:520px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .msg-list{border-right:1px solid var(--border);overflow-y:auto}
+    .msg-list-header{padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border);background:var(--bg)}
+    .msg-item{display:flex;align-items:flex-start;gap:11px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+    .msg-item:hover,.msg-item.active{background:var(--brand-light)}
+    .msg-avatar{width:38px;height:38px;border-radius:9px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--brand);flex-shrink:0;overflow:hidden}
+    .msg-avatar img{width:100%;height:100%;object-fit:cover;border-radius:9px}
+    .msg-item-content{flex:1;min-width:0}
+    .msg-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+    .msg-name{font-weight:600;font-size:13px}
+    .msg-time{font-size:11px;color:var(--ink3)}
+    .msg-preview{font-size:12.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .msg-chat{display:flex;flex-direction:column;height:100%}
+    .msg-chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg)}
+    .msg-chat-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+    .msg-bubble{max-width:70%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5}
+    .msg-bubble.received{background:var(--bg);border:1px solid var(--border);align-self:flex-start;border-radius:4px 12px 12px 12px}
+    .msg-bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-radius:12px 4px 12px 12px}
+    .msg-bubble-time{font-size:10.5px;color:var(--ink4);margin-top:3px}
+    .msg-bubble.sent .msg-bubble-time{color:rgba(255,255,255,.6)}
+    .msg-input-wrap{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--white)}
+    .msg-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    .msg-input:focus{border-color:var(--brand)}
+    .notif-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .notif-item{display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);transition:background .15s}
+    .notif-item:hover{background:var(--bg)}.notif-item:last-child{border-bottom:none}
+    .notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-light);flex-shrink:0}
+    .notif-icon svg{width:17px;height:17px;stroke:var(--brand);stroke-width:1.8;fill:none}
+    .notif-unread{width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:6px;flex-shrink:0}
+    .profile-cover{height:160px;background:linear-gradient(135deg,#f5ede2,#ede0ce);border-radius:var(--r) var(--r) 0 0;position:relative;overflow:hidden;cursor:pointer}
+    .profile-cover-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+    .cover-edit-btn{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+    .profile-avatar-wrap{position:relative;width:88px;height:88px;margin:-44px 0 0 22px;cursor:pointer}
+    .profile-avatar{width:88px;height:88px;border-radius:50%;border:4px solid #fff;box-shadow:var(--shadow);background:var(--brand-light);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px}
+    .profile-avatar img{width:100%;height:100%;object-fit:cover}
+    .avatar-edit-btn{position:absolute;bottom:4px;right:4px;width:26px;height:26px;background:var(--brand);color:#fff;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .avatar-edit-btn svg{width:12px;height:12px;stroke:#fff;stroke-width:2;fill:none}
+    .skill-tag{padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:600;background:var(--brand-light);color:var(--brand);display:inline-flex;align-items:center;gap:5px;margin:3px}
+    .skill-tag-x{cursor:pointer;font-size:14px;line-height:1}
+    .empty-state{text-align:center;padding:60px 30px}
+    .empty-state-icon{font-size:48px;margin-bottom:14px}
+    .empty-state h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:8px}
+    .empty-state p{font-size:13.5px;color:var(--ink3);margin-bottom:20px;max-width:320px;margin-left:auto;margin-right:auto;line-height:1.6}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.hidden{display:none}
+    .modal{background:var(--white);border-radius:16px;padding:30px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative}
+    .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+    .modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:6px}
+    .modal-sub{font-size:13px;color:var(--ink3);margin-bottom:22px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+    .form-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s;background:var(--white)}
+    .form-input:focus{border-color:var(--brand)}
+    .form-textarea{resize:vertical;min-height:80px}
+    .upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
+    .upload-zone:hover{border-color:var(--brand);background:var(--brand-light)}
+    .upload-zone p{font-size:12.5px;color:var(--ink3);margin-top:6px}
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+
+    /* AI CHATBOT */
+    #ai-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6d28d9,#9333ea);color:#fff;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(109,40,217,.4);z-index:150;transition:transform .2s}
+    #ai-fab:hover{transform:scale(1.1)}
+    #ai-panel{position:fixed;bottom:96px;right:28px;width:380px;height:520px;background:var(--white);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid var(--border);display:flex;flex-direction:column;z-index:149;overflow:hidden;transform:scale(0);transform-origin:bottom right;transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;opacity:0;pointer-events:none}
+    #ai-panel.open{transform:scale(1);opacity:1;pointer-events:all}
+    .ai-header{background:linear-gradient(135deg,#6d28d9,#9333ea);padding:16px 18px;display:flex;align-items:center;gap:12px;color:#fff}
+    .ai-av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .ai-header strong{display:block;font-size:14px;font-weight:700}
+    .ai-header span{font-size:11.5px;opacity:.8}
+    .ai-close-btn{margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px}
+    .ai-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+    .ai-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.55}
+    .ai-msg.ai{background:var(--white);border:1px solid var(--border);align-self:flex-start;border-radius:4px 12px 12px 12px;color:var(--ink2)}
+    .ai-msg.user{background:linear-gradient(135deg,#6d28d9,#9333ea);color:#fff;align-self:flex-end;border-radius:12px 4px 12px 12px}
+    .ai-typing{display:flex;gap:5px;align-items:center;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:4px 12px 12px 12px;width:fit-content;align-self:flex-start}
+    .ai-typing span{width:7px;height:7px;border-radius:50%;animation:bounce .8s infinite;background:#6d28d9}
+    .ai-typing span:nth-child(2){animation-delay:.15s}.ai-typing span:nth-child(3){animation-delay:.3s}
+    @keyframes bounce{0%,80%,100%{transform:scale(.8);opacity:.5}40%{transform:scale(1.2);opacity:1}}
+    .ai-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-top:1px solid var(--border);background:var(--white)}
+    .ai-chip{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:600;background:#ede9fe;color:#6d28d9;cursor:pointer;border:1px solid rgba(109,40,217,.2);transition:all .15s;white-space:nowrap}
+    .ai-chip:hover{background:#6d28d9;color:#fff}
+    .ai-iw{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .ai-inp{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    .ai-inp:focus{border-color:#6d28d9}
+    .ai-sb{width:36px;height:36px;border-radius:50%;background:#6d28d9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .ai-sb svg{width:16px;height:16px;stroke:#fff;stroke-width:2;fill:none}
+    /* TUT VIDEO OVERLAY */
+    .tov{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .tov.hidden{display:none}
+    .tov-close{position:absolute;top:20px;right:24px;width:38px;height:38px;background:rgba(255,255,255,.15);border:none;border-radius:50%;color:#fff;font-size:20px;cursor:pointer}
+    .tov-wrap{width:100%;max-width:860px;padding:0 20px}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+    @media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="#" class="sb-brand"><span>Art</span>Craft</a>
+  <div class="sb-user">
+    <div class="sb-avatar-wrap" onclick="document.getElementById('sb-av-input').click()">
+      <div class="sb-avatar" id="sb-avatar">🎨</div>
+      <div class="sb-avatar-edit"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      <input type="file" id="sb-av-input" style="display:none" accept="image/*" onchange="uploadAvatar(this)"/>
+    </div>
+    <div class="sb-user-info"><strong id="sb-name">Artist</strong><span class="sb-badge">Artist</span></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <button class="nav-item active" onclick="showPanel('overview')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Overview</button>
+    <button class="nav-item" onclick="showPanel('portfolio')"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>My Portfolio</button>
+    <button class="nav-item" onclick="showPanel('earnings')"><span class="nav-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Earnings</button>
+    <button class="nav-item" onclick="showPanel('orders')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Orders <span class="nav-badge" id="badge-orders" style="display:none">0</span></button>
+    <div class="sb-section">Grow</div>
+    <button class="nav-item" onclick="showPanel('jobs')"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></span>Job Board <span class="nav-badge" id="badge-jobs" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showPanel('tutorials')"><span class="nav-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>My Tutorials</button>
+    <button class="nav-item" onclick="showPanel('events')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16M12 17v5M8 17h8"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></span>Events <span class="nav-badge" id="badge-events" style="display:none">0</span></button>
+    <div class="sb-section">Connect</div>
+    <button class="nav-item" onclick="showPanel('messages')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Messages <span class="nav-badge" id="badge-msgs" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showPanel('notifications')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications <span class="nav-badge" id="badge-notifs" style="display:none">0</span></button>
+    <div class="sb-section">Account</div>
+    <button class="nav-item" onclick="showPanel('profile')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Edit Profile</button>
+  </nav>
+  <div class="sb-footer">
+    <button class="nav-item" style="color:var(--ink3)" onclick="signOut()">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>Sign Out
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <h1 class="topbar-title" id="page-title">Overview</h1>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openUploadModal()">+ Upload Artwork</button>
+      <button class="icon-btn" onclick="showPanel('notifications')">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="topbar-notif-dot" style="display:none"></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-content">
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="panel-overview">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Listed Artworks</div><div class="stat-value" id="ov-listed">0</div><div class="stat-sub">Upload &amp; list to sell</div></div>
+        <div class="stat-card"><div class="stat-label">Artworks Sold</div><div class="stat-value" id="ov-sold">0</div><div class="stat-sub" id="ov-sold-sub">No sales yet</div></div>
+        <div class="stat-card"><div class="stat-label">Total Earnings</div><div class="stat-value" id="ov-earnings" style="color:var(--brand)">₹0</div><div class="stat-sub">From sales + tutorials</div></div>
+        <div class="stat-card"><div class="stat-label">Tutorial Students</div><div class="stat-value" id="ov-students">0</div><div class="stat-sub">Across all tutorials</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:18px">
+        <div>
+          <div class="section-row"><div class="section-title">Recent Orders</div><button class="btn btn-outline btn-sm" onclick="showPanel('orders')">View All</button></div>
+          <div id="ov-orders-wrap"><div class="empty-state"><div class="empty-state-icon">📦</div><h3>No orders yet</h3></div></div>
+        </div>
+        <div>
+          <div class="section-row"><div class="section-title">Recent Messages</div></div>
+          <div id="ov-msgs-wrap"><div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;color:var(--ink3);font-size:13px">No messages yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="panel" id="panel-portfolio">
+      <div class="section-row">
+        <div><div class="section-title">My Portfolio</div><div class="section-sub" id="port-sub">0 artworks</div></div>
+        <div style="display:flex;gap:10px">
+          <div class="tabs" style="margin-bottom:0">
+            <button class="tab active" onclick="filterArt(this,'all')">All</button>
+            <button class="tab" onclick="filterArt(this,'listed')">Listed</button>
+            <button class="tab" onclick="filterArt(this,'sold')">Sold</button>
+            <button class="tab" onclick="filterArt(this,'draft')">Draft</button>
+          </div>
+          <button class="btn btn-primary" onclick="openUploadModal()">+ Add Artwork</button>
+        </div>
+      </div>
+      <div class="portfolio-grid" id="portfolio-grid"></div>
+    </div>
+
+    <!-- EARNINGS -->
+    <div class="panel" id="panel-earnings">
+      <div class="section-row"><div class="section-title">Earnings &amp; Analytics</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px">
+        <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-value" style="color:var(--brand)" id="earn-total">₹0</div></div>
+        <div class="stat-card"><div class="stat-label">Tutorial Earnings</div><div class="stat-value" style="color:var(--green)" id="earn-tut">₹0</div></div>
+        <div class="stat-card"><div class="stat-label">Artwork Sales</div><div class="stat-value" style="color:var(--blue)" id="earn-art">₹0</div></div>
+        <div class="stat-card"><div class="stat-label">Brand Payments</div><div class="stat-value" style="color:#6d28d9" id="earn-brand">₹0</div></div>
+      </div>
+      <div id="earnings-wrap"><div class="empty-state"><div class="empty-state-icon">💰</div><h3>No transactions yet</h3></div></div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="panel" id="panel-orders">
+      <div class="section-row"><div><div class="section-title">Customer Orders</div><div class="section-sub" id="orders-sub">Orders from buyers</div></div></div>
+      <div id="orders-list"></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="panel" id="panel-jobs">
+      <div class="section-row">
+        <div><div class="section-title">Job Board</div><div class="section-sub">Brand opportunities</div></div>
+        <div class="tabs" style="margin-bottom:0">
+          <button class="tab active" onclick="switchJobTab(this,'browse')">Browse</button>
+          <button class="tab" onclick="switchJobTab(this,'applied')">Applied</button>
+        </div>
+      </div>
+      <div id="jobs-browse-wrap"></div>
+      <div id="jobs-applied-wrap" style="display:none"></div>
+    </div>
+
+    <!-- TUTORIALS -->
+    <div class="panel" id="panel-tutorials">
+      <div class="section-row">
+        <div><div class="section-title">My Tutorials</div><div class="section-sub">Upload video tutorials — customers pay to watch</div></div>
+        <button class="btn btn-primary" onclick="openModal('tut-modal')">+ Create Tutorial</button>
+      </div>
+      <div id="tut-stats-wrap" style="display:none;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px">
+        <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-value" style="color:var(--brand)" id="tut-students">0</div></div>
+        <div class="stat-card"><div class="stat-label">Tutorial Earnings</div><div class="stat-value" style="color:var(--green)" id="tut-earnings">₹0</div></div>
+        <div class="stat-card"><div class="stat-label">Tutorials Created</div><div class="stat-value" style="color:var(--blue)" id="tut-count">0</div></div>
+      </div>
+      <div class="tutorial-grid" id="tutorial-grid"></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="panel" id="panel-events">
+      <div class="section-row">
+        <div><div class="section-title">Events &amp; Competitions</div><div class="section-sub">Posted by brands — win prizes</div></div>
+        <div class="tabs" style="margin-bottom:0">
+          <button class="tab active" onclick="switchEvTab(this,'all')">All</button>
+          <button class="tab" onclick="switchEvTab(this,'registered')">Registered</button>
+        </div>
+      </div>
+      <div id="events-list"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div class="section-row"><div class="section-title">Messages</div></div>
+      <div class="messages-layout">
+        <div class="msg-list">
+          <div class="msg-list-header">Conversations</div>
+          <div id="msg-contacts"></div>
+        </div>
+        <div class="msg-chat">
+          <div id="msg-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--ink3)">
+            <svg width="40" height="40" style="stroke:var(--ink4);stroke-width:1.5;fill:none;margin-bottom:10px" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div style="font-size:14px;font-weight:600">Select a conversation</div>
+          </div>
+          <div id="msg-chat-main" style="display:none;flex-direction:column;height:100%">
+            <div class="msg-chat-header">
+              <div class="msg-avatar" id="chat-avatar">👤</div>
+              <div><strong id="chat-name">—</strong><div style="font-size:12px;color:var(--ink3)" id="chat-role">—</div></div>
+            </div>
+            <div class="msg-chat-body" id="chat-body"></div>
+            <div class="msg-input-wrap">
+              <input class="msg-input" id="msg-input" placeholder="Type a reply…" onkeydown="if(event.key==='Enter')sendMsg()"/>
+              <button class="btn btn-primary btn-sm" onclick="sendMsg()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="panel-notifications">
+      <div class="section-row"><div class="section-title">Notifications</div><button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark All Read</button></div>
+      <div class="notif-panel" id="notif-list"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="panel" id="panel-profile">
+      <div class="section-row"><div><div class="section-title">Edit Profile</div><div class="section-sub">Brands &amp; customers can find you</div></div><button class="btn btn-primary" onclick="saveProfile()">Save &amp; Publish</button></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px">
+        <div class="profile-cover" onclick="document.getElementById('cover-input').click()">
+          <div class="profile-cover-inner" id="cover-inner">
+            <svg width="40" height="40" style="stroke:var(--ink4);stroke-width:1.2;fill:none;opacity:.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <button class="cover-edit-btn">Change Cover</button>
+          <input type="file" id="cover-input" style="display:none" accept="image/*" onchange="uploadCover(this)"/>
+        </div>
+        <div style="padding:0 22px 22px">
+          <div class="profile-avatar-wrap" onclick="document.getElementById('av-input').click()">
+            <div class="profile-avatar" id="p-avatar-display">🎨</div>
+            <div class="avatar-edit-btn"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <input type="file" id="av-input" style="display:none" accept="image/*" onchange="uploadAvatar(this)"/>
+          </div>
+          <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group" style="margin-bottom:0"><label>First Name</label><input class="form-input" id="p-fname"/></div>
+            <div class="form-group" style="margin-bottom:0"><label>Last Name</label><input class="form-input" id="p-lname"/></div>
+            <div class="form-group" style="margin-bottom:0"><label>Art Medium</label><input class="form-input" id="p-medium" placeholder="e.g. Madhubani, Watercolour"/></div>
+            <div class="form-group" style="margin-bottom:0"><label>City</label><input class="form-input" id="p-city"/></div>
+            <div class="form-group" style="grid-column:span 2;margin-bottom:0"><label>Bio</label><textarea class="form-input form-textarea" id="p-bio"></textarea></div>
+            <div class="form-group" style="margin-bottom:0"><label>Instagram</label><input class="form-input" id="p-instagram"/></div>
+            <div class="form-group" style="margin-bottom:0"><label>Website</label><input class="form-input" id="p-website"/></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:14px">Skills &amp; Expertise</div>
+        <div id="skills-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="skill-input" placeholder="Add a skill (e.g. Batik)" style="max-width:220px" onkeydown="if(event.key==='Enter')addSkill()"/>
+          <button class="btn btn-ghost btn-sm" onclick="addSkill()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- UPLOAD ARTWORK MODAL -->
+<div class="modal-overlay hidden" id="upload-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeUploadModal()">✕</button>
+    <div class="modal-title" id="upload-modal-title">Upload New Artwork</div>
+    <div class="upload-zone" id="art-upload-zone" onclick="document.getElementById('art-file').click()">
+      <div>🖼️</div><strong style="font-size:13.5px">Click to upload image</strong>
+      <p>JPG, PNG or WEBP</p>
+    </div>
+    <input type="file" id="art-file" style="display:none" accept="image/*" onchange="previewArtImage(this)"/>
+    <div id="art-preview-wrap" style="display:none;margin-top:12px;position:relative">
+      <img id="art-preview-img" src="" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;display:block"/>
+      <button onclick="removeArtPreview()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div class="form-group" style="margin-bottom:0"><label>Artwork Title *</label><input class="form-input" id="art-title" placeholder="e.g. Morning Raga"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Price (₹) *</label><input class="form-input" type="number" id="art-price" placeholder="e.g. 2500"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Medium</label><select class="form-input" id="art-medium"><option>Watercolour</option><option>Acrylic</option><option>Oil</option><option>Mixed Media</option><option>Digital</option><option>Handmade Craft</option><option>Other</option></select></div>
+      <div class="form-group" style="margin-bottom:0"><label>Dimensions</label><input class="form-input" id="art-dims" placeholder="e.g. 12×16 inches"/></div>
+      <div class="form-group" style="grid-column:span 2;margin-bottom:0"><label>Description</label><textarea class="form-input form-textarea" id="art-desc" placeholder="Tell buyers about this artwork…"></textarea></div>
+    </div>
+    <div id="upload-status" style="display:none;margin-top:12px;padding:10px 14px;background:var(--brand-light);border-radius:8px;font-size:13px;color:var(--brand);font-weight:600"></div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn btn-outline" onclick="saveArtwork('draft')">Save as Draft</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveArtwork('listed')">List on Marketplace →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TUTORIAL MODAL -->
+<div class="modal-overlay hidden" id="tut-modal">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('tut-modal')">✕</button>
+    <div class="modal-title">Create New Tutorial</div>
+    <div class="modal-sub">Upload a video — customers pay to watch</div>
+    <div class="form-group"><label>Tutorial Title *</label><input class="form-input" id="tut-title"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="margin-bottom:0"><label>Price (₹) *</label><input class="form-input" id="tut-price" type="number" placeholder="e.g. 299"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Duration</label><input class="form-input" id="tut-duration" placeholder="e.g. 45 min"/></div>
+      <div class="form-group" style="margin-bottom:0"><label>Level</label><select class="form-input" id="tut-level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+      <div class="form-group" style="margin-bottom:0"><label>Language</label><select class="form-input" id="tut-lang"><option>Hindi</option><option>English</option><option>Tamil</option><option>Telugu</option><option>Marathi</option></select></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label>Description</label><textarea class="form-input form-textarea" id="tut-desc"></textarea></div>
+    <div class="form-group">
+      <label>Tutorial Video *</label>
+      <div class="upload-zone" onclick="document.getElementById('tut-video-file').click()">
+        <div>🎬</div><strong style="font-size:13.5px">Click to upload video</strong><p>MP4, MOV · Max 500MB</p>
+        <input type="file" id="tut-video-file" style="display:none" accept="video/*" onchange="previewTutVideo(this)"/>
+      </div>
+      <div id="video-preview-wrap" style="display:none;margin-top:10px">
+        <video id="tut-video-preview" controls style="width:100%;border-radius:10px;max-height:220px;background:#000;display:block"></video>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+          <span id="video-file-name" style="font-size:12.5px;color:var(--green);font-weight:600">✓ Video ready</span>
+          <button class="btn btn-outline btn-sm" onclick="removeTutVideo()">Remove</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveTutorial()">Save Tutorial →</button>
+  </div>
+</div>
+
+<!-- APPLY JOB MODAL -->
+<div class="modal-overlay hidden" id="apply-modal">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('apply-modal')">✕</button>
+    <div class="modal-title" id="apply-modal-title">Apply to Job</div>
+    <div class="modal-sub" id="apply-modal-sub">Write a short message</div>
+    <div class="form-group"><label>Your Message</label><textarea class="form-input form-textarea" id="apply-message" placeholder="Tell the brand why you're a great fit…"></textarea></div>
+    <button class="btn btn-primary" style="width:100%" onclick="submitApplication()">Send Application →</button>
+    <input type="hidden" id="apply-job-id"/>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+const token = localStorage.getItem('artcraft_api_token');
+const sess = (() => { try { return JSON.parse(localStorage.getItem('artcraft_session_v1')); } catch { return null; } })();
+
+// Verify token with backend — don't trust stale localStorage
+if (!token || !sess || sess.role !== 'artist') {
+  localStorage.removeItem('artcraft_api_token');
+  localStorage.removeItem('artcraft_session_v1');
+  window.location.href = 'login.html';
+} else {
+  fetch(API_BASE + '/auth/me', {
+    headers: { Authorization: 'Bearer ' + token }
+  }).then(r => {
+    if (!r.ok) {
+      localStorage.removeItem('artcraft_api_token');
+      localStorage.removeItem('artcraft_session_v1');
+      window.location.href = 'login.html';
+    }
+  }).catch(() => {
+    // Backend unreachable — redirect to login
+    localStorage.removeItem('artcraft_api_token');
+    localStorage.removeItem('artcraft_session_v1');
+    window.location.href = 'login.html';
+  });
+}
+
+const ME_ID = sess?.userId;
+
+// ── API Helpers ───────────────────────────────────────────────
+async function api(method, path, body = null) {
+  const headers = { Authorization: `Bearer ${token}` };
+  const opts = { method, headers };
+  if (body instanceof FormData) {
+    opts.body = body;
+  } else if (body) {
+    headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { signOut(); return; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+  return data;
+}
+
+async function apiForm(method, path, obj) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined && v !== null) fd.append(k, v);
+  }
+  return api(method, path, fd);
+}
+
+function imgUrl(path) {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return API_BASE + path;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = '1';
+  setTimeout(() => t.style.opacity = '0', 2800);
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(iso) {
+  const d = (Date.now() - new Date(iso)) / 1000;
+  if (d < 60) return 'just now';
+  if (d < 3600) return Math.floor(d/60) + 'm ago';
+  if (d < 86400) return Math.floor(d/3600) + 'h ago';
+  return Math.floor(d/86400) + 'd ago';
+}
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => {
+  if (e.target === o) {
+    if (o.id === 'upload-modal') closeUploadModal();
+    else closeModal(o.id);
+  }
+}));
+
+function signOut() {
+  api('POST', '/auth/logout').finally(() => {
+    localStorage.removeItem('artcraft_api_token');
+    localStorage.removeItem('artcraft_session_v1');
+    window.location.href = 'login.html';
+  });
+}
+
+function setBadge(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n; el.style.display = n > 0 ? 'inline-block' : 'none';
+}
+
+// ── Panel Nav ─────────────────────────────────────────────────
+const panelTitles = { overview:'Overview', portfolio:'My Portfolio', earnings:'Earnings', orders:'Customer Orders', jobs:'Job Board', tutorials:'My Tutorials', events:'Events & Competitions', messages:'Messages', notifications:'Notifications', profile:'Edit Profile' };
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = panelTitles[name] || name;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${name}'`)) n.classList.add('active');
+  });
+  if (name === 'overview') renderOverview();
+  if (name === 'portfolio') loadPortfolio();
+  if (name === 'earnings') loadEarnings();
+  if (name === 'orders') loadOrders();
+  if (name === 'jobs') loadJobs();
+  if (name === 'tutorials') loadTutorials();
+  if (name === 'events') loadEvents('all');
+  if (name === 'messages') loadMessages();
+  if (name === 'notifications') loadNotifications();
+  if (name === 'profile') loadProfile();
+}
+
+// ── Init & Refresh ────────────────────────────────────────────
+let _myProfile = null;
+let _artworkFilter = 'all';
+let _jobTab = 'browse';
+let _evTab = 'all';
+let _activeThread = null;
+
+async function init() {
+  try {
+    _myProfile = await api('GET', '/auth/me');
+    document.getElementById('sb-name').textContent = `${_myProfile.first_name} ${_myProfile.last_name}`;
+    if (_myProfile.avatar_url) {
+      const sbAv = document.getElementById('sb-avatar');
+      sbAv.innerHTML = `<img src="${imgUrl(_myProfile.avatar_url)}" />`;
+    }
+    renderOverview();
+    loadBadges();
+    // AI greeting
+    setTimeout(() => appendAIMsg('ai', '👋 Namaste! I\'m your ArtCraft AI assistant. Ask me about pricing your artwork, getting more buyers, writing your bio, or anything else about your art business!'), 800);
+  } catch(e) { console.error(e); }
+}
+
+async function loadBadges() {
+  try {
+    const [orders, notifs, jobs] = await Promise.all([
+      api('GET', '/orders/artist'),
+      api('GET', '/notifications'),
+      api('GET', '/jobs'),
+    ]);
+    const pendingOrders = (orders || []).filter(o => o.status === 'pending').length;
+    const unreadNotifs = (notifs || []).filter(n => !n.read).length;
+    const newJobs = (jobs || []).length;
+    setBadge('badge-orders', pendingOrders);
+    setBadge('badge-notifs', unreadNotifs);
+    setBadge('badge-jobs', newJobs);
+    document.getElementById('topbar-notif-dot').style.display = unreadNotifs > 0 ? 'block' : 'none';
+  } catch(e) {}
+}
+
+// ── Overview ──────────────────────────────────────────────────
+async function renderOverview() {
+  try {
+    const [artworks, orders, tutorials] = await Promise.all([
+      api('GET', '/artworks/mine'),
+      api('GET', '/orders/artist'),
+      api('GET', `/tutorials?artist_id=${ME_ID}`),
+    ]);
+
+    const listed = (artworks || []).filter(a => a.status === 'listed').length;
+    const sold   = (artworks || []).filter(a => a.status === 'sold').length;
+    const tutStudents = (tutorials || []).reduce((s,t) => s + (t.students||0), 0);
+    const tutEarnings = (tutorials || []).reduce((s,t) => s + (t.earnings||0), 0);
+    const artEarnings = (orders || []).filter(o => o.payment_status === 'paid' || (o.payment_type === 'cod' && o.status === 'delivered')).reduce((s,o) => s + o.amount, 0);
+
+    document.getElementById('ov-listed').textContent = listed;
+    document.getElementById('ov-sold').textContent = sold;
+    document.getElementById('ov-earnings').textContent = `₹${(tutEarnings + artEarnings).toLocaleString('en-IN')}`;
+    document.getElementById('ov-students').textContent = tutStudents;
+
+    // Recent orders
+    const owrap = document.getElementById('ov-orders-wrap');
+    const recent = [...(orders||[])].reverse().slice(0, 4);
+    if (!recent.length) {
+      owrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No orders yet</h3></div>`;
+    } else {
+      owrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">${recent.map(o => `
+        <div class="order-item">
+          <div class="order-thumb">${o.art_image_url ? `<img src="${imgUrl(o.art_image_url)}" />` : '🖼️'}</div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13.5px">${esc(o.art_title)}</div><div style="font-size:12px;color:var(--ink3)">${esc(o.buyer_name)}</div></div>
+          <div style="text-align:right"><div style="font-weight:700;color:var(--brand)">₹${o.amount.toLocaleString('en-IN')}</div>${orderPill(o.status)}</div>
+        </div>`).join('')}</div>`;
+    }
+
+    // Recent messages
+    try {
+      const threads = await api('GET', '/messages/threads');
+      const mwrap = document.getElementById('ov-msgs-wrap');
+      if (!threads?.length) {
+        mwrap.innerHTML = `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;color:var(--ink3);font-size:13px">No messages yet</div>`;
+      } else {
+        mwrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">${threads.slice(0,3).map(t => `
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer${t.unread_count?';border-left:3px solid var(--brand)':''}" onclick="showPanel('messages');setTimeout(()=>openConvo('${t.thread_id}'),100)">
+            <div style="width:34px;height:34px;border-radius:8px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">${t.other_user?.role==='customer'?'👤':'🏢'}</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${esc(t.other_user?.name||'User')}</div><div style="font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.last_message?.body||'')}</div></div>
+            ${t.unread_count?`<span style="background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">${t.unread_count}</span>`:''}
+          </div>`).join('')}
+          <button class="btn btn-outline btn-sm" style="width:100%;margin-top:4px" onclick="showPanel('messages')">View All</button>
+        </div>`;
+      }
+    } catch(e) {}
+  } catch(e) { console.error(e); }
+}
+
+function orderPill(s) {
+  const map = { pending:'pill-orange', approved:'pill-green', rejected:'pill-red', shipped:'pill-green', delivered:'pill-blue' };
+  const labels = { pending:'Pending', approved:'Approved ✓', rejected:'Rejected', shipped:'Shipped 📦', delivered:'Delivered ✅' };
+  return `<span class="pill ${map[s]||'pill-gray'}">${labels[s]||s}</span>`;
+}
+
+// ── Portfolio ─────────────────────────────────────────────────
+let _artworks = [];
+let _artEditId = null;
+let _artImageFile = null;
+
+async function loadPortfolio() {
+  try {
+    _artworks = await api('GET', '/artworks/mine') || [];
+    renderPortfolio();
+  } catch(e) { console.error(e); }
+}
+
+function renderPortfolio() {
+  const grid = document.getElementById('portfolio-grid');
+  document.getElementById('port-sub').textContent = `${_artworks.length} artworks`;
+  const filtered = _artworkFilter === 'all' ? _artworks : _artworks.filter(a => a.status === _artworkFilter);
+  if (!_artworks.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-state-icon">🖼️</div><h3>No artworks yet</h3><button class="btn btn-primary" onclick="openUploadModal()">+ Upload Your First Artwork</button></div></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(a => `
+    <div class="art-card">
+      ${a.image_url ? `<img class="art-thumb" src="${imgUrl(a.image_url)}" />` : `<div class="art-thumb-ph">🖼️</div>`}
+      <div class="art-info">
+        <div class="art-title">${esc(a.title)}</div>
+        <div class="art-price">₹${Number(a.price).toLocaleString('en-IN')}</div>
+        <span class="art-status ${a.status}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span>
+      </div>
+      <div class="art-actions">
+        ${a.status !== 'sold' ? `
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="editArtwork('${a._id}')">Edit</button>
+          ${a.status === 'listed' ? `<button class="btn btn-green btn-sm" style="flex:1" onclick="markSold('${a._id}')">Mark Sold</button>` : `<button class="btn btn-primary btn-sm" style="flex:1" onclick="listArtwork('${a._id}')">List Now</button>`}
+        ` : `<button class="btn btn-outline btn-sm" style="flex:1" disabled>Sold ✓</button>`}
+        <button class="btn btn-danger btn-sm" onclick="deleteArtwork('${a._id}')">🗑</button>
+      </div>
+    </div>`).join('') + `<div class="add-card" onclick="openUploadModal()"><div style="font-size:32px">➕</div><p>Add Artwork</p></div>`;
+}
+
+function filterArt(btn, f) {
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  _artworkFilter = f;
+  renderPortfolio();
+}
+
+async function listArtwork(id) {
+  try {
+    const fd = new FormData(); fd.append('status', 'listed');
+    await api('PUT', `/artworks/${id}`, fd);
+    showToast('Listed on marketplace!');
+    loadPortfolio(); renderOverview();
+  } catch(e) { showToast(e.message); }
+}
+
+async function markSold(id) {
+  try {
+    const fd = new FormData(); fd.append('status', 'sold');
+    await api('PUT', `/artworks/${id}`, fd);
+    showToast('Marked as sold!');
+    loadPortfolio(); renderOverview();
+  } catch(e) { showToast(e.message); }
+}
+
+async function deleteArtwork(id) {
+  if (!confirm('Delete this artwork?')) return;
+  try {
+    await api('DELETE', `/artworks/${id}`);
+    showToast('Deleted');
+    loadPortfolio(); renderOverview();
+  } catch(e) { showToast(e.message); }
+}
+
+function editArtwork(id) {
+  const a = _artworks.find(x => x._id === id);
+  if (!a) return;
+  _artEditId = id; _artImageFile = null;
+  document.getElementById('upload-modal-title').textContent = 'Edit Artwork';
+  document.getElementById('art-title').value = a.title || '';
+  document.getElementById('art-price').value = a.price || '';
+  document.getElementById('art-medium').value = a.medium || 'Watercolour';
+  document.getElementById('art-dims').value = a.dims || '';
+  document.getElementById('art-desc').value = a.desc || '';
+  document.getElementById('art-file').value = '';
+  if (a.image_url) {
+    document.getElementById('art-preview-img').src = imgUrl(a.image_url);
+    document.getElementById('art-preview-wrap').style.display = 'block';
+    document.getElementById('art-upload-zone').style.display = 'none';
+  } else {
+    document.getElementById('art-preview-wrap').style.display = 'none';
+    document.getElementById('art-upload-zone').style.display = 'block';
+  }
+  openModal('upload-modal');
+}
+
+// ── Upload Artwork ────────────────────────────────────────────
+let _artInputGuard = false;
+
+function openUploadModal() {
+  _artEditId = null; _artImageFile = null;
+  document.getElementById('upload-modal-title').textContent = 'Upload New Artwork';
+  document.getElementById('art-title').value = '';
+  document.getElementById('art-price').value = '';
+  document.getElementById('art-medium').value = 'Watercolour';
+  document.getElementById('art-dims').value = '';
+  document.getElementById('art-desc').value = '';
+  document.getElementById('art-file').value = '';
+  document.getElementById('art-preview-wrap').style.display = 'none';
+  document.getElementById('art-upload-zone').style.display = 'block';
+  document.getElementById('upload-status').style.display = 'none';
+  openModal('upload-modal');
+}
+
+function closeUploadModal() { _artEditId = null; _artImageFile = null; closeModal('upload-modal'); }
+
+function previewArtImage(input) {
+  if (!input.files?.[0]) return;
+  _artImageFile = input.files[0];
+  const url = URL.createObjectURL(_artImageFile);
+  document.getElementById('art-preview-img').src = url;
+  document.getElementById('art-preview-wrap').style.display = 'block';
+  document.getElementById('art-upload-zone').style.display = 'none';
+}
+
+function removeArtPreview() {
+  _artImageFile = null;
+  document.getElementById('art-file').value = '';
+  document.getElementById('art-preview-wrap').style.display = 'none';
+  document.getElementById('art-upload-zone').style.display = 'block';
+}
+
+async function saveArtwork(status) {
+  const title = document.getElementById('art-title').value.trim();
+  const price = document.getElementById('art-price').value.trim();
+  if (!title) { showToast('Artwork title required'); return; }
+  if (!price)  { showToast('Price required'); return; }
+
+  const statusEl = document.getElementById('upload-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = _artEditId ? '⏳ Updating…' : '⏳ Uploading…';
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('price', price);
+  fd.append('medium', document.getElementById('art-medium').value);
+  fd.append('dims', document.getElementById('art-dims').value);
+  fd.append('desc', document.getElementById('art-desc').value);
+  fd.append('status', status);
+  if (_artImageFile) fd.append('image', _artImageFile);
+
+  try {
+    if (_artEditId) {
+      await api('PUT', `/artworks/${_artEditId}`, fd);
+    } else {
+      await api('POST', '/artworks', fd);
+    }
+    closeUploadModal();
+    showToast(status === 'listed' ? '✓ Listed on marketplace!' : '✓ Draft saved');
+    loadPortfolio(); renderOverview();
+  } catch(e) {
+    statusEl.textContent = '❌ ' + e.message;
+  }
+}
+
+// ── Earnings ──────────────────────────────────────────────────
+async function loadEarnings() {
+  try {
+    const [orders, tutorials, brandPays] = await Promise.all([
+      api('GET', '/orders/artist'),
+      api('GET', `/tutorials?artist_id=${ME_ID}`),
+      api('GET', '/payments/artist/received').catch(() => []),
+    ]);
+    const artEarnings = (orders||[]).filter(o => o.payment_status === 'paid' || (o.payment_type === 'cod' && o.status === 'delivered')).reduce((s,o) => s+o.amount, 0);
+    const tutEarnings = (tutorials||[]).reduce((s,t) => s+(t.earnings||0), 0);
+    const brandTotal  = (brandPays||[]).reduce((s,p) => s + (p.amount||0)/100, 0);
+    document.getElementById('earn-total').textContent = `₹${(artEarnings+tutEarnings+brandTotal).toLocaleString('en-IN')}`;
+    document.getElementById('earn-tut').textContent   = `₹${tutEarnings.toLocaleString('en-IN')}`;
+    document.getElementById('earn-art').textContent   = `₹${artEarnings.toLocaleString('en-IN')}`;
+    const brandEl = document.getElementById('earn-brand');
+    if (brandEl) brandEl.textContent = `₹${brandTotal.toLocaleString('en-IN')}`;
+
+    const completedOrders = (orders||[]).filter(o => o.status === 'approved' || o.status === 'delivered');
+    const wrap = document.getElementById('earnings-wrap');
+    const allRows = [];
+    completedOrders.forEach(o => allRows.push({ type:'Artwork Sale', from:o.buyer_name, desc:o.art_title, amount:o.amount, date:o.created_at }));
+    (brandPays||[]).forEach(p => allRows.push({ type:'Brand Payment', from:p.brand_name||'Brand', desc:p.desc||'', amount:(p.amount||0)/100, date:p.paid_at||p.created_at }));
+    allRows.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (!allRows.length && !tutEarnings) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💰</div><h3>No transactions yet</h3></div>`;
+    } else {
+      wrap.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Type</th><th>From</th><th>Description</th><th>Amount</th><th>Net (95%)</th><th>Date</th></tr></thead><tbody>${allRows.map(r => `<tr><td><span class="pill ${r.type==='Brand Payment'?'pill-blue':'pill-green'}">${r.type}</span></td><td>${esc(r.from)}</td><td>${esc(r.desc)}</td><td>₹${r.amount.toLocaleString('en-IN')}</td><td>₹${Math.round(r.amount*.95).toLocaleString('en-IN')}</td><td>${new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── Orders ────────────────────────────────────────────────────
+let _orders = [];
+async function loadOrders() {
+  try {
+    _orders = await api('GET', '/orders/artist') || [];
+    document.getElementById('orders-sub').textContent = `${_orders.length} total · ${_orders.filter(o=>o.status==='pending').length} pending`;
+    const wrap = document.getElementById('orders-list');
+    if (!_orders.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No orders yet</h3></div>`;
+      return;
+    }
+    wrap.innerHTML = [..._orders].reverse().map(o => `
+      <div class="order-item">
+        <div class="order-thumb">${o.art_image_url ? `<img src="${imgUrl(o.art_image_url)}" />` : '🖼️'}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${esc(o.art_title)}</div>
+          <div style="font-size:12.5px;color:var(--ink3)">Buyer: <strong>${esc(o.buyer_name)}</strong></div>
+          <div style="font-size:11.5px;color:var(--ink3);margin-top:3px">${o.payment_type==='cod'?'💵 COD':'💳 Online'} · ${o.address?`📍 ${esc(o.address.slice(0,40))}`:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;font-size:15px;color:var(--brand)">₹${o.amount.toLocaleString('en-IN')}</div>
+          ${orderPill(o.status)}
+          ${o.payment_type==='cod'
+            ? `<div style="font-size:11px;color:var(--ink3);margin-top:3px">💵 COD</div>`
+            : o.payment_status==='paid'
+              ? `<div style="font-size:11px;color:var(--green);font-weight:700;margin-top:3px">💰 Payment Received</div>`
+              : o.payment_status==='awaiting_payment'
+                ? `<div style="font-size:11px;color:var(--orange);font-weight:600;margin-top:3px">⏳ Customer Paying...</div>`
+                : `<div style="font-size:11px;color:var(--ink3);margin-top:3px">💳 Online</div>`}
+          ${o.status === 'pending' ? `<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-green btn-sm" onclick="updateOrder('${o._id}','approved')">Accept ✓</button><button class="btn btn-danger btn-sm" onclick="updateOrder('${o._id}','rejected')">Reject</button></div>` : ''}
+          ${o.status === 'approved' && (o.payment_status==='paid' || o.payment_type==='cod') ? `<button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="updateOrder('${o._id}','shipped')">Mark Shipped 📦</button>` : ''}
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function updateOrder(id, status) {
+  try {
+    const fd = new FormData(); fd.append('status', status);
+    await api('PUT', `/orders/${id}/status`, fd);
+    showToast(`Order ${status}`);
+    loadOrders(); renderOverview();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Jobs ──────────────────────────────────────────────────────
+async function loadJobs() {
+  try {
+    const [jobs, myApplications] = await Promise.all([
+      api('GET', '/jobs'),
+      api('GET', '/jobs/applications').catch(() => []),
+    ]);
+    const appliedIds = new Set((myApplications||[]).map(a => a.job_id));
+    const browseWrap = document.getElementById('jobs-browse-wrap');
+    if (!jobs?.length) {
+      browseWrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💼</div><h3>No jobs posted yet</h3><p>Brands will post jobs here when they're hiring artists.</p></div>`;
+    } else {
+      browseWrap.innerHTML = `<div>${jobs.map(j => `
+        <div class="job-card">
+          <div style="width:46px;height:46px;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px">${esc(j.title)}</div>
+            <div style="font-size:13px;color:var(--ink2);margin-bottom:8px">${esc(j.brand_name)} · ${esc(j.location||'Remote')} · ${esc(j.job_type)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${(j.skills||[]).map(s=>`<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--bg);color:var(--ink2);border:1px solid var(--border)">${esc(s)}</span>`).join('')}</div>
+            <div style="font-size:12px;color:var(--ink3)">${j.desc ? esc(j.desc.slice(0,120)) + (j.desc.length>120?'…':'') : ''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--brand)">${esc(j.budget)}</div>
+            ${appliedIds.has(j._id) ? `<button class="btn btn-green btn-sm" disabled>Applied ✓</button>` : `<button class="btn btn-primary btn-sm" onclick="openApplyModal('${j._id}','${esc(j.title)}','${esc(j.brand_name)}')">Apply Now</button>`}
+          </div>
+        </div>`).join('')}</div>`;
+    }
+    // Applied tab
+    const myApps = (myApplications||[]).filter(a => a.artist_id === ME_ID);
+    const appliedWrap = document.getElementById('jobs-applied-wrap');
+    if (!myApps.length) {
+      appliedWrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No applications yet</h3></div>`;
+    } else {
+      appliedWrap.innerHTML = myApps.map(a => `
+        <div class="job-card">
+          <div style="flex:1"><div style="font-weight:700;font-size:15px">${esc(a.job_title)}</div><div style="font-size:12px;color:var(--ink3)">${timeAgo(a.applied_at)}</div></div>
+          <span class="pill ${a.status==='shortlisted'?'pill-green':a.status==='rejected'?'pill-red':'pill-orange'}">${a.status}</span>
+        </div>`).join('');
+    }
+  } catch(e) { console.error(e); }
+}
+
+function switchJobTab(btn, tab) {
+  document.querySelectorAll('#panel-jobs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  _jobTab = tab;
+  document.getElementById('jobs-browse-wrap').style.display = tab === 'browse' ? 'block' : 'none';
+  document.getElementById('jobs-applied-wrap').style.display = tab === 'applied' ? 'block' : 'none';
+}
+
+function openApplyModal(jobId, title, brand) {
+  document.getElementById('apply-modal-title').textContent = `Apply: ${title}`;
+  document.getElementById('apply-modal-sub').textContent = `at ${brand}`;
+  document.getElementById('apply-job-id').value = jobId;
+  document.getElementById('apply-message').value = '';
+  openModal('apply-modal');
+}
+
+async function submitApplication() {
+  const jobId  = document.getElementById('apply-job-id').value;
+  const msg    = document.getElementById('apply-message').value.trim();
+  try {
+    const fd = new FormData(); fd.append('message', msg);
+    await api('POST', `/jobs/${jobId}/apply`, fd);
+    closeModal('apply-modal');
+    showToast('Application sent! ✓');
+    loadJobs();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Tutorials ─────────────────────────────────────────────────
+let _tutVideoFile = null;
+
+function previewTutVideo(input) {
+  if (!input.files?.[0]) return;
+  _tutVideoFile = input.files[0];
+  const url = URL.createObjectURL(_tutVideoFile);
+  document.getElementById('tut-video-preview').src = url;
+  document.getElementById('video-file-name').textContent = '✓ ' + _tutVideoFile.name;
+  document.getElementById('video-preview-wrap').style.display = 'block';
+  document.getElementById('tut-modal').querySelector('.upload-zone').style.display = 'none';
+}
+
+function removeTutVideo() {
+  _tutVideoFile = null;
+  document.getElementById('tut-video-file').value = '';
+  document.getElementById('tut-video-preview').src = '';
+  document.getElementById('video-preview-wrap').style.display = 'none';
+  document.getElementById('tut-modal').querySelector('.upload-zone').style.display = 'block';
+}
+
+async function loadTutorials() {
+  try {
+    const tuts = await api('GET', `/tutorials?artist_id=${ME_ID}`) || [];
+    const totalStudents = tuts.reduce((s,t) => s+(t.students||0), 0);
+    const totalEarnings = tuts.reduce((s,t) => s+(t.earnings||0), 0);
+
+    if (tuts.length) {
+      document.getElementById('tut-stats-wrap').style.display = 'grid';
+      document.getElementById('tut-students').textContent = totalStudents;
+      document.getElementById('tut-earnings').textContent = `₹${totalEarnings.toLocaleString('en-IN')}`;
+      document.getElementById('tut-count').textContent = tuts.length;
+    }
+
+    const grid = document.getElementById('tutorial-grid');
+    if (!tuts.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-state-icon">🎬</div><h3>No tutorials yet</h3><p>Upload a video tutorial — customers pay to watch!</p><button class="btn btn-primary" onclick="openModal('tut-modal')">+ Create Tutorial</button></div></div>`;
+      return;
+    }
+    grid.innerHTML = tuts.map(t => `
+      <div class="tut-card">
+        <div class="tut-thumb" onclick="playTutVideo('${t._id}','${esc(t.title)}')" style="cursor:pointer">
+          ${t.thumb_url ? `<img src="${imgUrl(t.thumb_url)}" />` : `<span>${t.level==='Beginner'?'🌱':t.level==='Advanced'?'🌟':'🎨'}</span>`}
+          <div class="tut-play-overlay"><div class="tut-play-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
+        </div>
+        <div class="tut-body">
+          <div class="tut-title">${esc(t.title)}</div>
+          <div class="tut-stats"><span>👥 ${t.students||0} students</span><span>⏱ ${esc(t.duration||'')}</span><span>${esc(t.lang||'')}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--green)">₹${(t.earnings||0).toLocaleString('en-IN')}</span>
+            <span class="pill pill-orange">₹${Number(t.price).toLocaleString('en-IN')}</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-primary btn-sm" onclick="playTutVideo('${t._id}','${esc(t.title)}')">▶ Preview Video</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTutorial('${t._id}')">Delete</button>
+          </div>
+        </div>
+      </div>`).join('') + `<div class="add-card" onclick="openModal('tut-modal')"><div style="font-size:32px">➕</div><p>New Tutorial</p></div>`;
+  } catch(e) { console.error(e); }
+}
+
+async function saveTutorial() {
+  const title = document.getElementById('tut-title').value.trim();
+  const price = document.getElementById('tut-price').value.trim();
+  if (!title || !price) { showToast('Title and price required'); return; }
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('price', price);
+  fd.append('duration', document.getElementById('tut-duration').value);
+  fd.append('level', document.getElementById('tut-level').value);
+  fd.append('lang', document.getElementById('tut-lang').value);
+  fd.append('desc', document.getElementById('tut-desc').value);
+  if (_tutVideoFile) fd.append('video', _tutVideoFile);
+
+  try {
+    await api('POST', '/tutorials', fd);
+    closeModal('tut-modal');
+    document.getElementById('tut-title').value = '';
+    document.getElementById('tut-price').value = '';
+    removeTutVideo();
+    showToast('Tutorial saved!');
+    loadTutorials();
+  } catch(e) { showToast(e.message); }
+}
+
+async function deleteTutorial(id) {
+  if (!confirm('Delete this tutorial?')) return;
+  try {
+    await api('DELETE', `/tutorials/${id}`);
+    showToast('Deleted');
+    loadTutorials();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Events ────────────────────────────────────────────────────
+let _registeredComps = new Set();
+
+async function loadEvents(filter) {
+  _evTab = filter;
+  try {
+    const [comps, myRegs] = await Promise.all([
+      api('GET', '/competitions') || [],
+      api('GET', '/competitions/mine/registered').catch(() => []),
+    ]);
+    // Populate _registeredComps from API
+    (myRegs || []).forEach(r => _registeredComps.add(r.comp_id));
+    const wrap = document.getElementById('events-list');
+    const filtered = filter === 'registered' ? comps.filter(c => _registeredComps.has(c._id)) : comps;
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏆</div><h3>No events yet</h3><p>Brands will post competitions here.</p></div>`;
+      return;
+    }
+    wrap.innerHTML = filtered.map(c => {
+      const isReg = _registeredComps.has(c._id);
+      const daysLeft = c.end_date ? Math.max(0, Math.ceil((new Date(c.end_date) - Date.now()) / 86400000)) : null;
+      return `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:flex-start;gap:16px;margin-bottom:12px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
+          <div style="width:50px;height:50px;border-radius:12px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏆</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px">${esc(c.title)}</div>
+            <div style="font-size:12.5px;color:var(--ink3);margin-bottom:8px">${esc(c.brand_name)} · ${esc(c.category)}</div>
+            ${daysLeft !== null ? `<div style="font-size:12px;color:var(--ink3);margin-bottom:8px">⏰ ${daysLeft > 0 ? daysLeft + ' days left' : 'Ended'} · ${c.entries||0} entries</div>` : ''}
+            <div style="font-size:13px;color:var(--ink2)">${esc((c.desc||'').slice(0,120))}${c.desc?.length>120?'…':''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+            <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--brand)">${esc(c.prize)}</div>
+            ${isReg ? `<button class="btn btn-green btn-sm" disabled>Registered ✓</button>` : `<button class="btn btn-primary btn-sm" onclick="registerComp('${c._id}','${esc(c.title)}')">Register</button>`}
+          </div>
+        </div>`;
+    }).join('');
+    setBadge('badge-events', comps.length);
+  } catch(e) { console.error(e); }
+}
+
+function switchEvTab(btn, filter) {
+  document.querySelectorAll('#panel-events .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadEvents(filter);
+}
+
+async function registerComp(id, title) {
+  try {
+    await api('POST', `/competitions/${id}/register`);
+    _registeredComps.add(id);
+    showToast(`Registered for "${title}"! Best of luck!`);
+    loadEvents(_evTab);
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Messages ──────────────────────────────────────────────────
+let _threads = [];
+
+async function loadMessages() {
+  try {
+    _threads = await api('GET', '/messages/threads') || [];
+    const listEl = document.getElementById('msg-contacts');
+    if (!_threads.length) {
+      listEl.innerHTML = `<div style="padding:20px;text-align:center;color:var(--ink3);font-size:13px">No messages yet. Brands and customers will contact you here.</div>`;
+      return;
+    }
+    listEl.innerHTML = _threads.map(t => `
+      <div class="msg-item ${_activeThread===t.thread_id?'active':''}" onclick="openConvo('${t.thread_id}')">
+        <div class="msg-avatar">${t.other_user?.role==='customer'?'👤':'🏢'}</div>
+        <div class="msg-item-content">
+          <div class="msg-item-top"><span class="msg-name">${esc(t.other_user?.name||'User')}</span><span class="msg-time">${t.last_message?timeAgo(t.last_message.created_at):''}</span></div>
+          <div class="msg-preview">${esc(t.last_message?.body||'')}</div>
+        </div>
+        ${t.unread_count?`<span style="width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:5px;flex-shrink:0;display:block"></span>`:''}
+      </div>`).join('');
+    setBadge('badge-msgs', _threads.reduce((s,t) => s+(t.unread_count||0), 0));
+  } catch(e) { console.error(e); }
+}
+
+async function openConvo(threadId) {
+  _activeThread = threadId;
+  const thread = _threads.find(t => t.thread_id === threadId);
+  try {
+    const msgs = await api('GET', `/messages/thread/${threadId}`);
+    document.getElementById('msg-placeholder').style.display = 'none';
+    document.getElementById('msg-chat-main').style.display = 'flex';
+    document.getElementById('chat-name').textContent = thread?.other_user?.name || 'User';
+    document.getElementById('chat-role').textContent = thread?.other_user?.role || '';
+    document.getElementById('chat-avatar').textContent = thread?.other_user?.role === 'customer' ? '👤' : '🏢';
+
+    const body = document.getElementById('chat-body');
+    body.innerHTML = (msgs||[]).map(m => {
+      const isMine = m.from_id === ME_ID;
+      return `<div class="msg-bubble ${isMine?'sent':'received'}">${esc(m.body)}<div class="msg-bubble-time">${new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    }).join('');
+    body.scrollTop = 9999;
+    loadMessages(); // refresh unread counts
+  } catch(e) { showToast(e.message); }
+}
+
+async function sendMsg() {
+  if (!_activeThread) return;
+  const input = document.getElementById('msg-input');
+  const val = input.value.trim();
+  if (!val) return;
+
+  const thread = _threads.find(t => t.thread_id === _activeThread);
+  const recipientId = thread?.other_user?.id;
+  if (!recipientId) return;
+
+  try {
+    const fd = new FormData();
+    fd.append('recipient_id', recipientId);
+    fd.append('body', val);
+    await api('POST', '/messages/send', fd);
+    input.value = '';
+    openConvo(_activeThread);
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Notifications ─────────────────────────────────────────────
+async function loadNotifications() {
+  try {
+    const notifs = await api('GET', '/notifications') || [];
+    const wrap = document.getElementById('notif-list');
+    if (!notifs.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>`;
+      return;
+    }
+    wrap.innerHTML = notifs.slice(0,30).map(n => `
+      <div class="notif-item">
+        <div class="notif-icon"><svg viewBox="0 0 24 24" width="17" height="17" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div style="flex:1"><p style="font-size:13.5px;color:var(--ink2)">${esc(n.text)}</p><div style="font-size:11.5px;color:var(--ink3);margin-top:3px">${timeAgo(n.created_at)}</div></div>
+        ${!n.read?'<div class="notif-unread"></div>':''}
+      </div>`).join('');
+    setBadge('badge-notifs', notifs.filter(n=>!n.read).length);
+  } catch(e) { console.error(e); }
+}
+
+async function markAllRead() {
+  try {
+    await api('PUT', '/notifications/read-all');
+    loadNotifications(); loadBadges();
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Profile ───────────────────────────────────────────────────
+async function loadProfile() {
+  if (!_myProfile) _myProfile = await api('GET', '/auth/me');
+  const p = _myProfile;
+  document.getElementById('p-fname').value = p.first_name || '';
+  document.getElementById('p-lname').value = p.last_name || '';
+  document.getElementById('p-medium').value = p.medium || '';
+  document.getElementById('p-city').value = p.city || '';
+  document.getElementById('p-bio').value = p.bio || '';
+  document.getElementById('p-instagram').value = p.instagram || '';
+  document.getElementById('p-website').value = p.website || '';
+  if (p.avatar_url) {
+    document.getElementById('p-avatar-display').innerHTML = `<img src="${imgUrl(p.avatar_url)}" />`;
+    document.getElementById('sb-avatar').innerHTML = `<img src="${imgUrl(p.avatar_url)}" />`;
+  }
+  if (p.cover_url) {
+    document.getElementById('cover-inner').innerHTML = `<img src="${imgUrl(p.cover_url)}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+  }
+  renderSkillTags(p.skills || []);
+}
+
+async function saveProfile() {
+  const fd = new FormData();
+  fd.append('first_name', document.getElementById('p-fname').value.trim());
+  fd.append('last_name',  document.getElementById('p-lname').value.trim());
+  fd.append('medium',     document.getElementById('p-medium').value.trim());
+  fd.append('city',       document.getElementById('p-city').value.trim());
+  fd.append('bio',        document.getElementById('p-bio').value.trim());
+  fd.append('instagram',  document.getElementById('p-instagram').value.trim());
+  fd.append('website',    document.getElementById('p-website').value.trim());
+  try {
+    _myProfile = await api('PUT', '/profile', fd);
+    document.getElementById('sb-name').textContent = `${_myProfile.first_name} ${_myProfile.last_name}`;
+    showToast('Profile saved & published ✓');
+  } catch(e) { showToast(e.message); }
+}
+
+async function uploadAvatar(input) {
+  if (!input.files?.[0]) return;
+  const fd = new FormData(); fd.append('avatar', input.files[0]);
+  try {
+    _myProfile = await api('PUT', '/profile', fd);
+    const url = imgUrl(_myProfile.avatar_url);
+    document.getElementById('sb-avatar').innerHTML = `<img src="${url}" />`;
+    document.getElementById('p-avatar-display').innerHTML = `<img src="${url}" />`;
+    showToast('Photo updated ✓');
+  } catch(e) { showToast(e.message); }
+}
+
+async function uploadCover(input) {
+  if (!input.files?.[0]) return;
+  const fd = new FormData(); fd.append('cover', input.files[0]);
+  try {
+    _myProfile = await api('PUT', '/profile', fd);
+    document.getElementById('cover-inner').innerHTML = `<img src="${imgUrl(_myProfile.cover_url)}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+    showToast('Cover updated ✓');
+  } catch(e) { showToast(e.message); }
+}
+
+function renderSkillTags(skills) {
+  document.getElementById('skills-wrap').innerHTML = skills.map(s => `
+    <span class="skill-tag">${esc(s)} <span class="skill-tag-x" onclick="removeSkill('${esc(s)}')">×</span></span>`).join('');
+}
+
+async function addSkill() {
+  const val = document.getElementById('skill-input').value.trim();
+  if (!val) return;
+  const fd = new FormData(); fd.append('skill', val);
+  try {
+    await api('POST', '/profile/skills', fd);
+    document.getElementById('skill-input').value = '';
+    _myProfile = await api('GET', '/auth/me');
+    renderSkillTags(_myProfile.skills || []);
+    showToast('Skill added');
+  } catch(e) { showToast(e.message); }
+}
+
+async function removeSkill(skill) {
+  try {
+    await api('DELETE', `/profile/skills/${encodeURIComponent(skill)}`);
+    _myProfile = await api('GET', '/auth/me');
+    renderSkillTags(_myProfile.skills || []);
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Start ─────────────────────────────────────────────────────
+init();
+
+// Refresh badges every 30s
+setInterval(loadBadges, 30000);
+</script>
+<div id="toast"></div>
+
+<!-- AI CHATBOT FAB -->
+<button id="ai-fab" onclick="toggleAI()">✨</button>
+<div id="ai-panel">
+  <div class="ai-header">
+    <div class="ai-av">🤖</div>
+    <div><strong>ArtCraft AI</strong><br><span>Your art business assistant</span></div>
+    <button class="ai-close-btn" onclick="toggleAI()">✕</button>
+  </div>
+  <div class="ai-body" id="ai-body"></div>
+  <div class="ai-chips" id="ai-chips">
+    <div class="ai-chip" onclick="askAI('How can I price my artwork correctly?')">💰 Pricing</div>
+    <div class="ai-chip" onclick="askAI('How do I get more buyers on ArtCraft?')">📈 More buyers</div>
+    <div class="ai-chip" onclick="askAI('Write a creative bio for my artist profile')">✍️ My bio</div>
+    <div class="ai-chip" onclick="askAI('Tips for better artwork photos')">📸 Photo tips</div>
+    <div class="ai-chip" onclick="askAI('How to create a successful tutorial?')">🎬 Tutorial tips</div>
+  </div>
+  <div class="ai-iw">
+    <input class="ai-inp" id="ai-input" placeholder="Ask about pricing, marketing, sales…" onkeydown="if(event.key==='Enter')sendAI()"/>
+    <button class="ai-sb" onclick="sendAI()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+</div>
+
+<!-- TUTORIAL VIDEO OVERLAY -->
+<div class="tov hidden" id="tov" onclick="if(event.target===this)closeTutVideo()">
+  <button class="tov-close" onclick="closeTutVideo()">✕</button>
+  <div class="tov-wrap">
+    <video id="tov-player" controls style="width:100%;border-radius:12px;max-height:70vh;background:#000;display:block"></video>
+    <div style="margin-top:12px;color:#fff;font-size:16px;font-weight:700" id="tov-title"></div>
+  </div>
+</div>
+
+<script>
+
+// ── AI CHATBOT ─────────────────────────────────────────────────
+const GROQ_KEY = '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';
+const GROQ_SYSTEM = 'You are ArtCraft AI, a helpful assistant for Indian artists. Help with artwork pricing, writing bios, getting more buyers, marketing on social media, creating tutorials, dealing with brand collaborations, and running an art business in India. Be concise, friendly, practical. Keep responses under 150 words. Use simple English.';
+let _aiOpen = false;
+const _aiHistory = [{ role: 'system', content: GROQ_SYSTEM }];
+
+function toggleAI() {
+  _aiOpen = !_aiOpen;
+  document.getElementById('ai-panel').classList.toggle('open', _aiOpen);
+}
+
+function appendAIMsg(role, text) {
+  const body = document.getElementById('ai-body');
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + role;
+  div.innerHTML = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  body.appendChild(div);
+  body.scrollTop = 9999;
+}
+
+function showAITyping() {
+  const body = document.getElementById('ai-body');
+  const d = document.createElement('div');
+  d.className='ai-typing';d.id='ai-typing';d.innerHTML='<span></span><span></span><span></span>';
+  body.appendChild(d);body.scrollTop=9999;
+}
+function removeAITyping() { document.getElementById('ai-typing')?.remove(); }
+
+async function askAI(text) {
+  if (!_aiOpen) toggleAI();
+  document.getElementById('ai-chips').style.display = 'none';
+  appendAIMsg('user', text);
+  _aiHistory.push({ role: 'user', content: text });
+  showAITyping();
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GROQ_KEY
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: _aiHistory,
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    });
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content;
+    if (!reply) throw new Error(data.error?.message || 'No response');
+    _aiHistory.push({ role: 'assistant', content: reply });
+    removeAITyping();
+    appendAIMsg('ai', reply);
+  } catch(e) {
+    removeAITyping();
+    appendAIMsg('ai', '⚠️ ' + e.message);
+  }
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await askAI(text);
+}
+
+// ── TUTORIAL VIDEO PLAYER ──────────────────────────────────────
+async function playTutVideo(tutId, title) {
+  try {
+    const tut = await api('GET', '/tutorials/' + tutId);
+    const url = tut.video_url ? (tut.video_url.startsWith('http') ? tut.video_url : API_BASE + tut.video_url) : null;
+    if (!url) { showToast('No video uploaded for this tutorial yet'); return; }
+    document.getElementById('tov-player').src = url;
+    document.getElementById('tov-title').textContent = title;
+    document.getElementById('tov').classList.remove('hidden');
+    document.getElementById('tov-player').play().catch(()=>{});
+  } catch(e) { showToast('Could not load video: ' + e.message); }
+}
+function closeTutVideo() {
+  const p = document.getElementById('tov-player');
+  p.pause(); p.src = '';
+  document.getElementById('tov').classList.add('hidden');
+}
+
+</script>
+</body>
+</html>

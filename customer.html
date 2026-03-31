@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Dashboard — ArtCraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root{--brand:#2c6e49;--brand-light:#e8f5ee;--brand-dark:#1f4f34;--ink:#1a1a1a;--ink2:#444;--ink3:#888;--ink4:#bbb;--border:#e8ede9;--bg:#f4f8f5;--white:#fff;--orange:#b5631a;--orange-light:#fff3e8;--red:#c0392b;--red-bg:#fdecea;--blue:#1a6eb5;--blue-bg:#e8f0fd;--sidebar-w:240px;--r:12px;--shadow:0 2px 12px rgba(0,0,0,.07)}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+    .sidebar{width:var(--sidebar-w);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+    .sb-brand{padding:22px 20px 18px;font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--ink);border-bottom:1px solid var(--border);text-decoration:none;display:block}
+    .sb-brand span{color:var(--brand)}
+    .sb-user{padding:14px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+    .sb-avatar{width:40px;height:40px;border-radius:50%;border:2px solid var(--brand-light);background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden}
+    .sb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .sb-user-info strong{display:block;font-size:13px;font-weight:600}
+    .sb-badge{font-size:10px;color:var(--brand);font-weight:700;background:var(--brand-light);padding:2px 7px;border-radius:20px;display:inline-block;margin-top:3px}
+    .sb-nav{padding:12px 10px;flex:1}
+    .sb-section{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);padding:10px 10px 5px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);cursor:pointer;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+    .nav-item:hover,.nav-item.active{background:var(--brand-light);color:var(--brand)}
+    .nav-item.active{font-weight:600}
+    .nav-icon{width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .nav-icon svg{width:17px;height:17px;stroke:var(--ink3);stroke-width:1.8;fill:none}
+    .nav-item:hover .nav-icon svg,.nav-item.active .nav-icon svg{stroke:var(--brand)}
+    .nav-badge{margin-left:auto;background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+    .sb-footer{padding:14px 12px;border-top:1px solid var(--border)}
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .icon-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+    .icon-btn svg{width:17px;height:17px;stroke:var(--ink2);stroke-width:1.8;fill:none}
+    .notif-dot{width:8px;height:8px;background:var(--brand);border-radius:50%;position:absolute;top:4px;right:4px;border:2px solid #fff}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:none;transition:all .18s;text-decoration:none}
+    .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dark)}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}.btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+    .btn-orange{background:var(--orange);color:#fff}
+    .btn-sm{padding:6px 13px;font-size:12.5px}
+    .btn:disabled{opacity:.6;pointer-events:none}
+    .page-content{padding:28px;flex:1}
+    .panel{display:none}.panel.active{display:block}
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+    .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px}
+    .stat-label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+    .stat-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700}
+    .section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .section-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+    .marketplace-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+    .art-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer}
+    .art-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,.1)}
+    .art-thumb{width:100%;height:180px;object-fit:cover;display:block}
+    .art-thumb-ph{width:100%;height:180px;background:linear-gradient(135deg,#e8f5ee,#d4ede0);display:flex;align-items:center;justify-content:center;font-size:48px}
+    .art-info{padding:14px}
+    .art-artist{font-size:11.5px;color:var(--ink3);margin-bottom:4px}
+    .art-title{font-weight:700;font-size:14px;margin-bottom:6px}
+    .art-price{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--orange)}
+    .search-input{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;background:var(--white)}
+    .search-input:focus{border-color:var(--brand)}
+    .chip{padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink2);transition:all .15s}
+    .chip.active,.chip:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-light)}
+    .tut-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .tut-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform .2s,box-shadow .2s}
+    .tut-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+    .tut-thumb{width:100%;height:160px;background:linear-gradient(135deg,#e8f5ee,#d4ede0);display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;cursor:pointer;overflow:hidden}
+    .tut-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .tut-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)}
+    .tut-play-btn{width:52px;height:52px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .tut-play-btn svg{width:22px;height:22px;stroke:var(--brand);stroke-width:2;fill:none;margin-left:3px}
+    .tut-body{padding:14px 16px}
+    .tut-title{font-weight:700;font-size:14px;margin-bottom:4px}
+    .tut-artist{font-size:12px;color:var(--ink3);margin-bottom:8px}
+    .tut-price{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--orange)}
+    .order-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;display:flex;gap:14px;align-items:center;margin-bottom:10px}
+    .order-thumb{width:54px;height:54px;border-radius:8px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+    .order-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+    .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+    .pill-green{background:var(--brand-light);color:var(--brand)}.pill-orange{background:var(--orange-light);color:var(--orange)}.pill-red{background:var(--red-bg);color:var(--red)}.pill-blue{background:var(--blue-bg);color:var(--blue)}.pill-gray{background:var(--bg);color:var(--ink3);border:1px solid var(--border)}
+    .messages-layout{display:grid;grid-template-columns:260px 1fr;height:500px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .msg-list{border-right:1px solid var(--border);overflow-y:auto}
+    .msg-list-header{padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;justify-content:space-between;align-items:center}
+    .msg-item{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+    .msg-item:hover,.msg-item.active{background:var(--brand-light)}
+    .msg-avatar{width:36px;height:36px;border-radius:9px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--brand);flex-shrink:0;overflow:hidden}
+    .msg-avatar img{width:100%;height:100%;object-fit:cover;border-radius:9px}
+    .msg-name{font-weight:600;font-size:13px}.msg-time{font-size:11px;color:var(--ink3)}
+    .msg-preview{font-size:12px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .msg-chat{display:flex;flex-direction:column;height:100%}
+    .msg-chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg)}
+    .msg-chat-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .msg-bubble{max-width:72%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5}
+    .msg-bubble.received{background:var(--bg);border:1px solid var(--border);align-self:flex-start;border-radius:4px 12px 12px 12px}
+    .msg-bubble.sent{background:var(--brand);color:#fff;align-self:flex-end;border-radius:12px 4px 12px 12px}
+    .msg-bubble-time{font-size:10px;color:var(--ink4);margin-top:3px}
+    .msg-bubble.sent .msg-bubble-time{color:rgba(255,255,255,.6)}
+    .msg-input-wrap{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .msg-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    .msg-input:focus{border-color:var(--brand)}
+    .notif-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .notif-item{display:flex;align-items:flex-start;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);transition:background .15s}
+    .notif-item:hover{background:var(--bg)}.notif-item:last-child{border-bottom:none}
+    .empty-state{text-align:center;padding:60px 30px}
+    .empty-state-icon{font-size:48px;margin-bottom:14px}
+    .empty-state h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:8px}
+    .empty-state p{font-size:13.5px;color:var(--ink3);margin-bottom:20px;max-width:320px;margin-left:auto;margin-right:auto;line-height:1.6}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal-overlay.hidden{display:none}
+    .modal{background:var(--white);border-radius:16px;padding:30px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+    .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+    .modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:6px}
+    .modal-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+    .form-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s;background:var(--white)}
+    .form-input:focus{border-color:var(--brand)}
+    .form-textarea{resize:vertical;min-height:80px}
+    .pay-option{border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:all .2s}
+    .pay-option:hover,.pay-option.selected{border-color:var(--brand);background:var(--brand-light)}
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <a href="#" class="sb-brand"><span>Art</span>Craft</a>
+  <div class="sb-user">
+    <div class="sb-avatar" id="sb-avatar">👤</div>
+    <div class="sb-user-info"><strong id="sb-name">Customer</strong><span class="sb-badge">Customer</span></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Discover</div>
+    <button class="nav-item active" onclick="showPanel('home')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Home</button>
+    <button class="nav-item" onclick="showPanel('marketplace')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Browse Artworks</button>
+    <button class="nav-item" onclick="showPanel('tutorials')"><span class="nav-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>Tutorials</button>
+    <div class="sb-section">My Activity</div>
+    <button class="nav-item" onclick="showPanel('orders')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>My Orders <span class="nav-badge" id="badge-orders" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showPanel('messages')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Messages <span class="nav-badge" id="badge-msgs" style="display:none">0</span></button>
+    <button class="nav-item" onclick="showPanel('notifications')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications <span class="nav-badge" id="badge-notifs" style="display:none">0</span></button>
+    <div class="sb-section">Account</div>
+    <button class="nav-item" onclick="showPanel('profile')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>My Profile</button>
+  </nav>
+  <div class="sb-footer">
+    <button class="nav-item" style="color:var(--ink3)" onclick="signOut()">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>Sign Out
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <h1 class="topbar-title" id="page-title">Home</h1>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="showPanel('notifications')">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="topbar-notif-dot" style="display:none"></span>
+      </button>
+    </div>
+  </header>
+  <div class="page-content">
+
+    <!-- HOME -->
+    <div class="panel active" id="panel-home">
+      <div style="background:linear-gradient(135deg,var(--brand),var(--brand-dark));border-radius:var(--r);padding:32px;color:#fff;margin-bottom:24px">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:8px">Welcome to ArtCraft 🎨</div>
+        <div style="font-size:14px;opacity:.85;margin-bottom:18px">Discover unique artworks by talented Indian artists. Buy directly, support art.</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" style="background:#fff;color:var(--brand);font-weight:700" onclick="showPanel('marketplace')">Browse Artworks →</button>
+          <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="showPanel('tutorials')">Watch Tutorials</button>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Orders Placed</div><div class="stat-value" id="ov-orders">0</div></div>
+        <div class="stat-card"><div class="stat-label">Tutorials Purchased</div><div class="stat-value" id="ov-tuts">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" id="ov-spent" style="color:var(--orange)">₹0</div></div>
+      </div>
+      <div class="section-row"><div class="section-title">Latest Artworks</div><button class="btn btn-outline btn-sm" onclick="showPanel('marketplace')">View All</button></div>
+      <div id="home-artworks"></div>
+      <div class="section-row" style="margin-top:24px"><div class="section-title">Featured Tutorials</div><button class="btn btn-outline btn-sm" onclick="showPanel('tutorials')">View All</button></div>
+      <div id="home-tutorials"></div>
+    </div>
+
+    <!-- MARKETPLACE -->
+    <div class="panel" id="panel-marketplace">
+      <div class="section-row"><div><div class="section-title">Browse Artworks</div><div class="section-sub" id="mkt-sub">Loading…</div></div></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <input class="search-input" id="art-search" placeholder="Search artworks, artists…" oninput="filterArtworks()"/>
+        <button class="btn btn-primary btn-sm" onclick="filterArtworks()">Search</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px" id="medium-chips">
+        <div class="chip active" onclick="setMedium(this,'all')">All Mediums</div>
+        <div class="chip" onclick="setMedium(this,'Watercolour')">Watercolour</div>
+        <div class="chip" onclick="setMedium(this,'Acrylic')">Acrylic</div>
+        <div class="chip" onclick="setMedium(this,'Digital')">Digital</div>
+        <div class="chip" onclick="setMedium(this,'Handmade Craft')">Handmade Craft</div>
+        <div class="chip" onclick="setMedium(this,'Mixed Media')">Mixed Media</div>
+      </div>
+      <div class="marketplace-grid" id="marketplace-grid"></div>
+    </div>
+
+    <!-- TUTORIALS -->
+    <div class="panel" id="panel-tutorials">
+      <div class="section-row"><div><div class="section-title">Art Tutorials</div><div class="section-sub">Learn from skilled artists. Pay once, watch forever.</div></div></div>
+      <div class="tut-grid" id="tut-grid"></div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="panel" id="panel-orders">
+      <div class="section-row"><div><div class="section-title">My Orders</div><div class="section-sub" id="orders-sub">Your purchase history</div></div></div>
+      <div id="orders-wrap"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div class="section-row"><div class="section-title">Messages</div></div>
+      <div class="messages-layout">
+        <div class="msg-list">
+          <div class="msg-list-header"><span>Artists</span><button class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:11px" onclick="openNewMsgModal()">+ New</button></div>
+          <div id="msg-contacts"></div>
+        </div>
+        <div class="msg-chat">
+          <div id="msg-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--ink3)">
+            <svg width="40" height="40" style="stroke:var(--ink4);stroke-width:1.5;fill:none;margin-bottom:10px" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div style="font-size:14px;font-weight:600">Select a conversation</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="openNewMsgModal()">Message an Artist 🎨</button>
+          </div>
+          <div id="msg-chat-main" style="display:none;flex-direction:column;height:100%">
+            <div class="msg-chat-header"><div class="msg-avatar" id="chat-avatar">🎨</div><div><strong id="chat-name">—</strong><div style="font-size:12px;color:var(--ink3)">Artist</div></div></div>
+            <div class="msg-chat-body" id="chat-body"></div>
+            <div class="msg-input-wrap">
+              <input class="msg-input" id="msg-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()"/>
+              <button class="btn btn-primary btn-sm" onclick="sendMsg()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="panel-notifications">
+      <div class="section-row"><div class="section-title">Notifications</div><button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark All Read</button></div>
+      <div class="notif-panel" id="notif-list"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="panel" id="panel-profile">
+      <div class="section-row"><div><div class="section-title">My Profile</div></div><button class="btn btn-primary" onclick="saveProfile()">Save</button></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group" style="margin-bottom:0"><label>First Name</label><input class="form-input" id="p-fname"/></div>
+          <div class="form-group" style="margin-bottom:0"><label>Last Name</label><input class="form-input" id="p-lname"/></div>
+          <div class="form-group" style="margin-bottom:0"><label>Email</label><input class="form-input" id="p-email"/></div>
+          <div class="form-group" style="margin-bottom:0"><label>Phone</label><input class="form-input" id="p-phone"/></div>
+          <div class="form-group" style="grid-column:span 2;margin-bottom:0"><label>Delivery Address</label><textarea class="form-input form-textarea" id="p-address" placeholder="Your default delivery address"></textarea></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- BUY ARTWORK MODAL -->
+<div class="modal-overlay hidden" id="buy-modal">
+  <div class="modal" style="max-width:500px">
+    <button class="modal-close" onclick="closeModal('buy-modal')">✕</button>
+    <div class="modal-title" id="buy-title">Purchase Artwork</div>
+    <div class="modal-sub" id="buy-sub">Choose delivery &amp; payment</div>
+    <div id="buy-step-1">
+      <div class="form-group"><label>Delivery Address *</label><textarea class="form-input form-textarea" id="buy-address" style="min-height:70px"></textarea></div>
+      <div class="form-group"><label>Phone *</label><input class="form-input" id="buy-phone" placeholder="+91 XXXXX XXXXX"/></div>
+      <div class="form-group"><label>Note to Artist (optional)</label><input class="form-input" id="buy-note" placeholder="Any special request?"/></div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)">Payment Method</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div class="pay-option selected" id="pay-online" onclick="selectPay('online')">
+          <div style="font-size:26px;margin-bottom:6px">💳</div>
+          <div style="font-weight:700;font-size:13px">Online Payment</div>
+          <div style="font-size:11px;color:var(--ink3)">Via Stripe — Card</div>
+        </div>
+        <div class="pay-option" id="pay-cod" onclick="selectPay('cod')">
+          <div style="font-size:26px;margin-bottom:6px">💵</div>
+          <div style="font-weight:700;font-size:13px">Cash on Delivery</div>
+          <div style="font-size:11px;color:var(--ink3)">Pay when received</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="proceedBuy()">Continue →</button>
+    </div>
+    <div id="buy-step-success" style="display:none;text-align:center">
+      <div style="font-size:64px;margin-bottom:16px">🎉</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:8px">Order Placed!</div>
+      <div style="font-size:13.5px;color:var(--ink3);margin-bottom:20px" id="buy-success-msg">Your order is on its way!</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal('buy-modal')">Close</button>
+        <button class="btn btn-primary" style="flex:1" onclick="closeModal('buy-modal');showPanel('orders')">View Orders</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARTWORK DETAIL MODAL -->
+<div class="modal-overlay hidden" id="art-modal">
+  <div class="modal" style="max-width:640px">
+    <button class="modal-close" onclick="closeModal('art-modal')">✕</button>
+    <div id="art-modal-content"></div>
+  </div>
+</div>
+
+<!-- WATCH TUTORIAL MODAL -->
+<div class="modal-overlay hidden" id="tut-modal">
+  <div class="modal" style="max-width:700px">
+    <button class="modal-close" onclick="closeTutModal()">✕</button>
+    <div id="tut-modal-content"></div>
+  </div>
+</div>
+
+<!-- NEW MESSAGE MODAL -->
+<div class="modal-overlay hidden" id="new-msg-modal">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('new-msg-modal')">✕</button>
+    <div class="modal-title">Message an Artist</div>
+    <div class="form-group"><label>Select Artist</label>
+      <select class="form-input" id="nm-artist-select"><option value="">-- Select Artist --</option></select>
+    </div>
+    <div class="form-group"><label>Message *</label><textarea class="form-input form-textarea" id="nm-body" placeholder="Hi, I love your work and…"></textarea></div>
+    <button class="btn btn-primary" style="width:100%" onclick="sendNewMessage()">Send Message</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:8000'; // Backend URL
+const STRIPE_PUB = 'pk_test_51TFUEsAkOvpUa6hU6G5cJIq9DFNZ7rEpwzVGxgFIjg0Kxzdqz6qtyOAW5ehNkGwrQa5CEUHnMBEUP5J7b2s3cHOG00Rgban7QN';
+const token = localStorage.getItem('artcraft_api_token');
+const sess = (() => { try { return JSON.parse(localStorage.getItem('artcraft_session_v1')); } catch { return null; } })();
+
+if (!token || !sess || sess.role !== 'customer') window.location.href = 'login.html';
+
+const ME_ID = sess?.userId;
+
+// ── API ───────────────────────────────────────────────────────
+async function api(method, path, body = null) {
+  const headers = { Authorization: `Bearer ${token}` };
+  const opts = { method, headers };
+  if (body instanceof FormData) opts.body = body;
+  else if (body) { headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const res = await fetch(API_BASE + path, opts);
+  if (res.status === 401) { signOut(); return; }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+  return data;
+}
+
+function imgUrl(p) { if (!p) return null; if (p.startsWith('http')) return p; return API_BASE + p; }
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2800); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function timeAgo(iso) { const d=(Date.now()-new Date(iso))/1000; if(d<60)return'just now'; if(d<3600)return Math.floor(d/60)+'m ago'; if(d<86400)return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago'; }
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) { if (o.id==='tut-modal') closeTutModal(); else o.classList.add('hidden'); }}));
+function setBadge(id, n) { const el=document.getElementById(id); if(!el)return; el.textContent=n; el.style.display=n>0?'inline-block':'none'; }
+function signOut() { api('POST','/auth/logout').finally(()=>{ localStorage.removeItem('artcraft_api_token'); localStorage.removeItem('artcraft_session_v1'); window.location.href='login.html'; }); }
+
+const panelTitles = { home:'Home', marketplace:'Browse Artworks', tutorials:'Art Tutorials', orders:'My Orders', messages:'Messages', notifications:'Notifications', profile:'My Profile' };
+let _myProfile = null;
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('page-title').textContent = panelTitles[name]||name;
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${name}'`))n.classList.add('active');});
+  if(name==='home')loadHome();
+  if(name==='marketplace')loadArtworks();
+  if(name==='tutorials')loadTutorials();
+  if(name==='orders')loadOrders();
+  if(name==='messages')loadMessages();
+  if(name==='notifications')loadNotifications();
+  if(name==='profile')loadProfile();
+}
+
+async function init() {
+  try {
+    _myProfile = await api('GET', '/auth/me');
+    document.getElementById('sb-name').textContent = `${_myProfile.first_name} ${_myProfile.last_name}`;
+    if (_myProfile.avatar_url) {
+      document.getElementById('sb-avatar').innerHTML = `<img src="${imgUrl(_myProfile.avatar_url)}" />`;
+    }
+    loadHome(); loadBadges();
+  } catch(e) { console.error(e); }
+}
+
+async function loadBadges() {
+  try {
+    const [orders, notifs, threads] = await Promise.all([
+      api('GET','/orders/mine'),
+      api('GET','/notifications'),
+      api('GET','/messages/threads').catch(()=>[]),
+    ]);
+    setBadge('badge-orders', (orders||[]).filter(o=>o.status==='pending'||o.status==='approved').length);
+    setBadge('badge-notifs', (notifs||[]).filter(n=>!n.read).length);
+    setBadge('badge-msgs', (threads||[]).reduce((s,t)=>s+(t.unread_count||0),0));
+    document.getElementById('topbar-notif-dot').style.display = (notifs||[]).some(n=>!n.read) ? 'block' : 'none';
+  } catch(e) {}
+}
+
+// ── HOME ──────────────────────────────────────────────────────
+async function loadHome() {
+  try {
+    const [orders, purchased, artworks, tutorials] = await Promise.all([
+      api('GET','/orders/mine'),
+      api('GET','/tutorials/mine/purchased').catch(()=>[]),
+      api('GET','/artworks?status=listed'),
+      api('GET','/tutorials'),
+    ]);
+    const spent = (orders||[]).filter(o=>o.status!=='rejected').reduce((s,o)=>s+o.amount,0);
+    const tutSpent = (purchased||[]).reduce((s,t)=>s+(t.price||0),0);
+    document.getElementById('ov-orders').textContent = (orders||[]).length;
+    document.getElementById('ov-tuts').textContent = (purchased||[]).length;
+    document.getElementById('ov-spent').textContent = `₹${(spent+tutSpent).toLocaleString('en-IN')}`;
+
+    const arts = (artworks||[]).slice(0,4);
+    document.getElementById('home-artworks').innerHTML = arts.length
+      ? `<div class="marketplace-grid">${arts.map(a=>artCard(a)).join('')}</div>`
+      : `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:30px;text-align:center;color:var(--ink3);font-size:13px">No artworks listed yet. Check back soon!</div>`;
+
+    const tuts = (tutorials||[]).slice(0,3);
+    document.getElementById('home-tutorials').innerHTML = tuts.length
+      ? `<div class="tut-grid">${tuts.map(t=>tutCard(t,false)).join('')}</div>`
+      : `<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;color:var(--ink3);font-size:13px">No tutorials yet</div>`;
+  } catch(e) { console.error(e); }
+}
+
+// ── MARKETPLACE ───────────────────────────────────────────────
+let _allArtworks = [], _medFilter = 'all';
+
+async function loadArtworks() {
+  try {
+    _allArtworks = await api('GET', '/artworks?status=listed') || [];
+    filterArtworks();
+  } catch(e) { console.error(e); }
+}
+
+function filterArtworks() {
+  const search = (document.getElementById('art-search')?.value||'').toLowerCase();
+  let arts = _allArtworks;
+  if (_medFilter !== 'all') arts = arts.filter(a => a.medium === _medFilter);
+  if (search) arts = arts.filter(a => (a.title+a.artist_name+a.medium).toLowerCase().includes(search));
+  document.getElementById('mkt-sub').textContent = `${arts.length} artworks found`;
+  const grid = document.getElementById('marketplace-grid');
+  grid.innerHTML = arts.length ? arts.map(a=>artCard(a)).join('') : `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-state-icon">🎨</div><h3>No artworks found</h3></div></div>`;
+}
+
+function setMedium(el, med) {
+  document.querySelectorAll('#medium-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  _medFilter = med;
+  filterArtworks();
+}
+
+function artCard(a) {
+  return `<div class="art-card" onclick="openArtDetail('${a._id}')">
+    ${a.image_url ? `<img class="art-thumb" src="${imgUrl(a.image_url)}" />` : `<div class="art-thumb-ph">🖼️</div>`}
+    <div class="art-info">
+      <div class="art-artist">🎨 ${esc(a.artist_name||'Artist')}</div>
+      <div class="art-title">${esc(a.title)}</div>
+      <div style="font-size:11.5px;color:var(--ink3);margin-bottom:6px">${esc(a.medium||'')}${a.dims?` · ${esc(a.dims)}`:''}</div>
+      <div class="art-price">₹${Number(a.price).toLocaleString('en-IN')}</div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="event.stopPropagation();openBuyModal('${a._id}')">Buy Now 🛒</button>
+    </div>
+  </div>`;
+}
+
+function openArtDetail(id) {
+  const a = _allArtworks.find(x=>x._id===id);
+  if (!a) return;
+  document.getElementById('art-modal-content').innerHTML = `
+    ${a.image_url?`<img src="${imgUrl(a.image_url)}" style="width:100%;max-height:300px;object-fit:cover;border-radius:10px;margin-bottom:16px;display:block" />` : `<div style="width:100%;height:200px;background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:60px;margin-bottom:16px">🖼️</div>`}
+    <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:6px">${esc(a.title)}</div>
+    <div style="font-size:13.5px;color:var(--ink3);margin-bottom:12px">by <strong>${esc(a.artist_name||'Artist')}</strong> · ${esc(a.medium||'')} ${a.dims?`· ${esc(a.dims)}`:''}</div>
+    ${a.desc?`<div style="font-size:13.5px;color:var(--ink2);line-height:1.7;margin-bottom:14px">${esc(a.desc)}</div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--orange)">₹${Number(a.price).toLocaleString('en-IN')}</div>
+      <button class="btn btn-primary" onclick="closeModal('art-modal');openBuyModal('${a._id}')">Buy Now 🛒</button>
+    </div>`;
+  openModal('art-modal');
+}
+
+// ── BUY ARTWORK ───────────────────────────────────────────────
+let _buyArtId = null, _buyPayMethod = 'online';
+
+function openBuyModal(artId) {
+  _buyArtId = artId;
+  _buyPayMethod = 'online';
+  const a = _allArtworks.find(x=>x._id===artId);
+  if (!a) return;
+  document.getElementById('buy-title').textContent = 'Buy: ' + a.title;
+  document.getElementById('buy-sub').textContent = `₹${Number(a.price).toLocaleString('en-IN')} · by ${a.artist_name||'Artist'}`;
+  document.getElementById('buy-address').value = _myProfile?.address || '';
+  document.getElementById('buy-phone').value = _myProfile?.phone || '';
+  document.getElementById('buy-note').value = '';
+  document.getElementById('buy-step-1').style.display = 'block';
+  document.getElementById('buy-step-success').style.display = 'none';
+  document.getElementById('pay-online').classList.add('selected');
+  document.getElementById('pay-cod').classList.remove('selected');
+  openModal('buy-modal');
+}
+
+function selectPay(m) {
+  _buyPayMethod = m;
+  document.getElementById('pay-online').classList.toggle('selected', m==='online');
+  document.getElementById('pay-cod').classList.toggle('selected', m==='cod');
+}
+
+async function proceedBuy() {
+  const address = document.getElementById('buy-address').value.trim();
+  const phone   = document.getElementById('buy-phone').value.trim();
+  const note    = document.getElementById('buy-note').value.trim();
+  if (!address) { showToast('Please enter delivery address'); return; }
+  if (!phone)   { showToast('Please enter phone number'); return; }
+
+  const fd = new FormData();
+  fd.append('artwork_id', _buyArtId);
+  fd.append('address', address);
+  fd.append('phone', phone);
+  fd.append('note', note);
+  fd.append('payment_type', _buyPayMethod);
+
+  try {
+    const res = await api('POST', '/payments/artwork/checkout', fd);
+    if (_buyPayMethod === 'online' && res.checkout_url) {
+      // Redirect to Stripe Checkout
+      window.location.href = res.checkout_url;
+    } else {
+      // COD — show success
+      document.getElementById('buy-step-1').style.display = 'none';
+      document.getElementById('buy-step-success').style.display = 'block';
+      document.getElementById('buy-success-msg').textContent = 'Your COD order is confirmed! The artist will contact you shortly.';
+      showToast('🎉 Order placed!');
+      loadBadges();
+    }
+  } catch(e) { showToast(e.message); }
+}
+
+// ── TUTORIALS ─────────────────────────────────────────────────
+let _purchasedTutIds = new Set();
+
+async function loadTutorials() {
+  try {
+    const [tuts, purchased] = await Promise.all([
+      api('GET', '/tutorials'),
+      api('GET', '/tutorials/mine/purchased').catch(()=>[]),
+    ]);
+    _purchasedTutIds = new Set((purchased||[]).map(t=>t._id));
+    const grid = document.getElementById('tut-grid');
+    if (!(tuts||[]).length) {
+      grid.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-state-icon">🎬</div><h3>No tutorials yet</h3><p>Artists will upload tutorials here soon.</p></div></div>`;
+      return;
+    }
+    grid.innerHTML = tuts.map(t => tutCard(t, _purchasedTutIds.has(t._id))).join('');
+  } catch(e) { console.error(e); }
+}
+
+function tutCard(t, purchased) {
+  return `<div class="tut-card">
+    <div class="tut-thumb" onclick="${purchased ? `watchTutorial('${t._id}')` : `buyTutorial('${t._id}')`}">
+      ${t.thumb_url ? `<img src="${imgUrl(t.thumb_url)}" />` : `<span>${t.level==='Beginner'?'🌱':t.level==='Advanced'?'🌟':'🎨'}</span>`}
+      ${purchased
+        ? `<div class="tut-play"><div class="tut-play-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>`
+        : `<div class="tut-play"><div style="background:rgba(0,0,0,.6);border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="22" height="22" style="stroke:#fff;stroke-width:2;fill:none"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div>`}
+    </div>
+    <div class="tut-body">
+      <div class="tut-title">${esc(t.title)}</div>
+      <div class="tut-artist">by ${esc(t.artist_name||'Artist')} · ${esc(t.level||'')} · ${esc(t.lang||'')} · ⏱ ${esc(t.duration||'')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        ${purchased ? `<span style="color:var(--brand);font-weight:700;font-size:13px">✓ Purchased</span>` : `<div class="tut-price">₹${Number(t.price).toLocaleString('en-IN')}</div>`}
+        ${purchased
+          ? `<button class="btn btn-primary btn-sm" onclick="watchTutorial('${t._id}')">▶ Watch</button>`
+          : `<button class="btn btn-orange btn-sm" onclick="buyTutorial('${t._id}')">Buy →</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function buyTutorial(id) {
+  try {
+    const fd = new FormData(); fd.append('tutorial_id', id);
+    const res = await api('POST', '/payments/tutorial/checkout', fd);
+    if (res.checkout_url) {
+      window.location.href = res.checkout_url;
+    } else {
+      showToast('Checkout unavailable. Try again.');
+    }
+  } catch(e) { showToast(e.message); }
+}
+
+async function watchTutorial(id) {
+  try {
+    const tut = await api('GET', `/tutorials/${id}`);
+    if (tut.locked) {
+      showToast('Please purchase this tutorial first');
+      return;
+    }
+    document.getElementById('tut-modal-content').innerHTML = `
+      ${tut.video_url
+        ? `<div style="background:#000;border-radius:10px;overflow:hidden;margin-bottom:16px"><video src="${imgUrl(tut.video_url)}" controls autoplay preload="auto" style="width:100%;max-height:380px;display:block"></video></div>`
+        : `<div style="background:#1a1a1a;border-radius:10px;padding:50px 40px;text-align:center;color:#888;margin-bottom:16px"><div style="font-size:40px;margin-bottom:12px">🎬</div><div style="font-size:14px">Video not yet uploaded by artist.</div></div>`}
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:6px">${esc(tut.title)}</div>
+      <div style="font-size:13px;color:var(--ink3);margin-bottom:12px">by <strong>${esc(tut.artist_name||'Artist')}</strong></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="pill pill-green">${esc(tut.level||'')}</span>
+        <span class="pill pill-gray">🌐 ${esc(tut.lang||'')}</span>
+        <span class="pill pill-gray">⏱ ${esc(tut.duration||'')}</span>
+        <span class="pill pill-green">✓ Purchased</span>
+      </div>
+      ${tut.desc?`<div style="font-size:13.5px;color:var(--ink2);line-height:1.7;background:var(--bg);border-radius:8px;padding:12px">${esc(tut.desc)}</div>`:''}`;
+    openModal('tut-modal');
+  } catch(e) {
+    if (e.message?.includes('403')) {
+      showToast('Please purchase this tutorial first');
+    } else {
+      showToast(e.message);
+    }
+  }
+}
+
+function closeTutModal() {
+  const vid = document.querySelector('#tut-modal-content video');
+  if (vid) { vid.pause(); vid.src = ''; }
+  closeModal('tut-modal');
+}
+
+// ── ORDERS ────────────────────────────────────────────────────
+async function loadOrders() {
+  try {
+    const orders = await api('GET', '/orders/mine') || [];
+    document.getElementById('orders-sub').textContent = `${orders.length} orders`;
+    const wrap = document.getElementById('orders-wrap');
+    if (!orders.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No orders yet</h3><p>Browse artworks and place your first order!</p><button class="btn btn-primary" onclick="showPanel('marketplace')">Browse Artworks</button></div>`;
+      return;
+    }
+    const statusMap = {
+      pending:{label:'Pending Artist Approval',color:'pill-orange'},
+      approved:{label:'Approved ✓',color:'pill-green'},
+      rejected:{label:'Not Accepted',color:'pill-red'},
+      shipped:{label:'Shipped 📦',color:'pill-green'},
+      delivered:{label:'Delivered ✅',color:'pill-green'}
+    };
+    wrap.innerHTML = [...orders].reverse().map(o => `
+      <div class="order-card">
+        <div class="order-thumb">${o.art_image_url?`<img src="${imgUrl(o.art_image_url)}" />`:'🖼️'}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${esc(o.art_title)}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:2px">by ${esc(o.artist_name||'Artist')}</div>
+          <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">${o.payment_type==='cod'?'💵 Cash on Delivery':'💳 Online'} · ${timeAgo(o.created_at)}</div>
+          ${o.address?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">📍 ${esc(o.address)}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;font-size:15px;color:var(--orange);margin-bottom:5px">₹${o.amount.toLocaleString('en-IN')}</div>
+          <span class="pill ${(statusMap[o.status]||{color:'pill-gray'}).color}">${(statusMap[o.status]||{label:o.status}).label}</span>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ── MESSAGES ──────────────────────────────────────────────────
+let _threads = [], _activeThread = null;
+
+async function loadMessages() {
+  try {
+    _threads = await api('GET', '/messages/threads') || [];
+    const listEl = document.getElementById('msg-contacts');
+    if (!_threads.length) {
+      listEl.innerHTML = `<div style="padding:18px;text-align:center;color:var(--ink3);font-size:13px">No conversations yet.<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openNewMsgModal()">Message Artist</button></div>`;
+      return;
+    }
+    listEl.innerHTML = _threads.map(t => `
+      <div class="msg-item ${_activeThread===t.thread_id?'active':''}" onclick="openConvo('${t.thread_id}')">
+        <div class="msg-avatar">${t.other_user?.avatar_url?`<img src="${imgUrl(t.other_user.avatar_url)}" />`:'🎨'}</div>
+        <div class="msg-item-content" style="min-width:0">
+          <div style="display:flex;justify-content:space-between"><span class="msg-name">${esc(t.other_user?.name||'Artist')}</span><span class="msg-time">${t.last_message?timeAgo(t.last_message.created_at):''}</span></div>
+          <div class="msg-preview">${esc(t.last_message?.body||'')}</div>
+        </div>
+        ${t.unread_count?`<span style="width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:5px;flex-shrink:0;display:block"></span>`:''}
+      </div>`).join('');
+    setBadge('badge-msgs', _threads.reduce((s,t)=>s+(t.unread_count||0),0));
+  } catch(e) { console.error(e); }
+}
+
+async function openConvo(threadId) {
+  _activeThread = threadId;
+  const thread = _threads.find(t => t.thread_id === threadId);
+  try {
+    const msgs = await api('GET', `/messages/thread/${threadId}`);
+    document.getElementById('msg-placeholder').style.display = 'none';
+    document.getElementById('msg-chat-main').style.display = 'flex';
+    document.getElementById('chat-name').textContent = thread?.other_user?.name || 'Artist';
+    const av = thread?.other_user?.avatar_url;
+    document.getElementById('chat-avatar').innerHTML = av ? `<img src="${imgUrl(av)}" style="width:100%;height:100%;object-fit:cover;border-radius:9px"/>` : '🎨';
+
+    const body = document.getElementById('chat-body');
+    body.innerHTML = (msgs||[]).map(m => {
+      const isMine = m.from_id === ME_ID;
+      return `<div class="msg-bubble ${isMine?'sent':'received'}">${esc(m.body)}<div class="msg-bubble-time">${new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    }).join('');
+    body.scrollTop = 9999;
+    loadMessages();
+  } catch(e) { showToast(e.message); }
+}
+
+async function sendMsg() {
+  if (!_activeThread) return;
+  const input = document.getElementById('msg-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const thread = _threads.find(t => t.thread_id === _activeThread);
+  const recipientId = thread?.other_user?.id;
+  if (!recipientId) return;
+  try {
+    const fd = new FormData();
+    fd.append('recipient_id', recipientId);
+    fd.append('body', val);
+    await api('POST', '/messages/send', fd);
+    input.value = '';
+    openConvo(_activeThread);
+  } catch(e) { showToast(e.message); }
+}
+
+async function openNewMsgModal() {
+  try {
+    const artists = await api('GET', '/artists') || [];
+    const sel = document.getElementById('nm-artist-select');
+    sel.innerHTML = '<option value="">-- Select Artist --</option>' + artists.map(a => `<option value="${a._id}">${esc(a.first_name+' '+a.last_name)}</option>`).join('');
+    document.getElementById('nm-body').value = '';
+    openModal('new-msg-modal');
+  } catch(e) { showToast('Could not load artists'); }
+}
+
+async function sendNewMessage() {
+  const artistId = document.getElementById('nm-artist-select').value;
+  const body = document.getElementById('nm-body').value.trim();
+  if (!artistId) { showToast('Select an artist'); return; }
+  if (!body)     { showToast('Write a message'); return; }
+  try {
+    const fd = new FormData();
+    fd.append('recipient_id', artistId);
+    fd.append('body', body);
+    await api('POST', '/messages/send', fd);
+    closeModal('new-msg-modal');
+    showToast('Message sent! ✓');
+    showPanel('messages');
+    setTimeout(loadMessages, 300);
+  } catch(e) { showToast(e.message); }
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────
+async function loadNotifications() {
+  try {
+    const notifs = await api('GET', '/notifications') || [];
+    const wrap = document.getElementById('notif-list');
+    if (!notifs.length) {
+      wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔔</div><h3>No notifications</h3></div>`;
+      return;
+    }
+    wrap.innerHTML = notifs.slice(0,30).map(n => `
+      <div class="notif-item">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="17" height="17" style="stroke:var(--brand);stroke-width:1.8;fill:none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div style="flex:1"><p style="font-size:13.5px;color:var(--ink2)">${esc(n.text)}</p><div style="font-size:11.5px;color:var(--ink3);margin-top:3px">${timeAgo(n.created_at)}</div></div>
+        ${!n.read?'<div style="width:8px;height:8px;background:var(--brand);border-radius:50%;margin-top:6px;flex-shrink:0"></div>':''}
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function markAllRead() {
+  try {
+    await api('PUT', '/notifications/read-all');
+    loadNotifications(); loadBadges();
+  } catch(e) {}
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+async function loadProfile() {
+  if (!_myProfile) _myProfile = await api('GET', '/auth/me');
+  document.getElementById('p-fname').value = _myProfile.first_name || '';
+  document.getElementById('p-lname').value = _myProfile.last_name || '';
+  document.getElementById('p-email').value = _myProfile.email || '';
+  document.getElementById('p-phone').value = _myProfile.phone || '';
+  document.getElementById('p-address').value = _myProfile.address || '';
+}
+
+async function saveProfile() {
+  const fd = new FormData();
+  fd.append('first_name', document.getElementById('p-fname').value.trim());
+  fd.append('last_name',  document.getElementById('p-lname').value.trim());
+  fd.append('phone',      document.getElementById('p-phone').value.trim());
+  try {
+    _myProfile = await api('PUT', '/profile', fd);
+    document.getElementById('sb-name').textContent = `${_myProfile.first_name} ${_myProfile.last_name}`;
+    showToast('Profile saved ✓');
+  } catch(e) { showToast(e.message); }
+}
+
+// ── Handle Stripe redirect back ───────────────────────────────
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const sessionId = params.get('session_id');
+  const type = params.get('type');
+  if (sessionId && type) {
+    history.replaceState({}, '', location.pathname);
+    try {
+      const fd = new FormData(); fd.append('session_id', sessionId);
+      if (type === 'tutorial') {
+        const verifyRes = await api('POST', '/payments/tutorial/verify', fd);
+        showToast('🎬 Tutorial unlocked! ✓');
+        await loadTutorials();
+        showPanel('tutorials');
+        // Auto-open the just purchased tutorial
+        const tutId = params.get('id') || verifyRes?.tutorial_id;
+        if (tutId) {
+          setTimeout(() => watchTutorial(tutId), 500);
+        }
+      } else if (type === 'artwork') {
+        await api('POST', '/payments/artwork/verify', fd);
+        showToast('🎉 Payment confirmed! Order placed.');
+        showPanel('orders');
+        loadOrders();
+      }
+    } catch(e) { showToast('Payment verification: ' + e.message); }
+  }
+})();
+
+init();
+setInterval(loadBadges, 30000);
+</script>
+</body>
+</html>
