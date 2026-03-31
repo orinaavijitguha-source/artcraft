@@ -123,6 +123,72 @@
     #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
     @keyframes spin{to{transform:rotate(360deg)}}
+  
+    /* ── MOBILE RESPONSIVE ────────────────────────────────── */
+    @media(max-width:768px){
+      .sidebar{ display:none !important }
+      .main{ margin-left:0 !important }
+      .topbar{ padding:0 14px; height:54px }
+      .topbar-title{ font-size:16px }
+      .page-content{ padding:14px 12px 80px 12px }
+      .stats-grid{ grid-template-columns:1fr 1fr !important; gap:10px }
+      .stats-row{ grid-template-columns:1fr 1fr !important; gap:10px }
+      .portfolio-grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important }
+      .marketplace-grid{ grid-template-columns:repeat(auto-fill,minmax(160px,1fr)) !important }
+      .artist-grid{ grid-template-columns:repeat(auto-fill,minmax(160px,1fr)) !important }
+      .tutorial-grid{ grid-template-columns:1fr !important }
+      .tut-grid{ grid-template-columns:1fr !important }
+      .messages-layout{ grid-template-columns:1fr !important; height:auto !important }
+      .msg-list{ height:200px; border-right:none !important; border-bottom:1px solid var(--border) }
+      .msg-chat{ height:400px }
+      .form-row{ grid-template-columns:1fr !important }
+      .stat-value{ font-size:20px !important }
+      .btn{ font-size:12.5px; padding:8px 14px }
+      .btn-sm{ padding:5px 10px; font-size:11.5px }
+      .topbar-right{ gap:6px }
+      .modal-overlay{ padding:0; align-items:flex-end }
+      .modal{ border-radius:16px 16px 0 0; max-height:92vh; max-width:100% !important; width:100% }
+      #ai-panel{ width:calc(100vw - 20px) !important; right:10px !important; bottom:80px !important }
+      #ai-fab{ bottom:70px !important; right:16px !important }
+      .job-card{ flex-wrap:wrap }
+      .app-card{ flex-wrap:wrap }
+      .order-item{ flex-wrap:wrap }
+      .order-card{ flex-wrap:wrap }
+      [class*="section-row"]{ flex-wrap:wrap; gap:8px }
+    }
+    .mobile-nav{
+      display:none;
+      position:fixed;
+      bottom:0;left:0;right:0;
+      background:var(--white);
+      border-top:1px solid var(--border);
+      z-index:200;
+      padding:6px 0 env(safe-area-inset-bottom,6px);
+      box-shadow:0 -4px 20px rgba(0,0,0,.08);
+    }
+    .mobile-nav-inner{
+      display:flex;align-items:center;justify-content:space-around;
+      max-width:500px;margin:0 auto;
+    }
+    .mob-nav-item{
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      padding:6px 8px;border:none;background:none;cursor:pointer;
+      color:var(--ink3);font-size:10px;font-weight:600;
+      font-family:'DM Sans',sans-serif;border-radius:10px;
+      transition:all .15s;position:relative;min-width:48px;
+    }
+    .mob-nav-item.active{ color:var(--brand) }
+    .mob-nav-item svg{ width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none }
+    .mob-nav-badge{
+      position:absolute;top:0;right:4px;
+      min-width:16px;height:16px;
+      background:var(--brand);color:#fff;
+      font-size:9px;font-weight:700;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      padding:0 3px;
+    }
+    @media(max-width:768px){ .mobile-nav{ display:block } }
+
   </style>
 </head>
 <body>
@@ -331,12 +397,32 @@
 <div id="toast"></div>
 
 <script>
-const API_BASE = 'http://localhost:8000'; // Backend URL
+const API_BASE = 'https://artcraft-93qm.onrender.com';
 const STRIPE_PUB = 'pk_test_51TFUEsAkOvpUa6hU6G5cJIq9DFNZ7rEpwzVGxgFIjg0Kxzdqz6qtyOAW5ehNkGwrQa5CEUHnMBEUP5J7b2s3cHOG00Rgban7QN';
 const token = localStorage.getItem('artcraft_api_token');
 const sess = (() => { try { return JSON.parse(localStorage.getItem('artcraft_session_v1')); } catch { return null; } })();
 
-if (!token || !sess || sess.role !== 'customer') window.location.href = 'login.html';
+// Verify token with backend — don't trust stale localStorage
+if (!token || !sess || sess.role !== 'customer') {
+  localStorage.removeItem('artcraft_api_token');
+  localStorage.removeItem('artcraft_session_v1');
+  window.location.href = 'login.html';
+} else {
+  fetch(API_BASE + '/auth/me', {
+    headers: { Authorization: 'Bearer ' + token }
+  }).then(r => {
+    if (!r.ok) {
+      localStorage.removeItem('artcraft_api_token');
+      localStorage.removeItem('artcraft_session_v1');
+      window.location.href = 'login.html';
+    }
+  }).catch(() => {
+    // Backend unreachable — redirect to login
+    localStorage.removeItem('artcraft_api_token');
+    localStorage.removeItem('artcraft_session_v1');
+    window.location.href = 'login.html';
+  });
+}
 
 const ME_ID = sess?.userId;
 
@@ -415,7 +501,8 @@ async function loadHome() {
       api('GET','/artworks?status=listed'),
       api('GET','/tutorials'),
     ]);
-    const spent = (orders||[]).filter(o=>o.status!=='rejected').reduce((s,o)=>s+o.amount,0);
+    // Only count actually PAID orders — not pending/approved without payment
+    const spent = (orders||[]).filter(o => o.payment_status === 'paid' || o.payment_type === 'cod' && o.status === 'delivered').reduce((s,o)=>s+o.amount,0);
     const tutSpent = (purchased||[]).reduce((s,t)=>s+(t.price||0),0);
     document.getElementById('ov-orders').textContent = (orders||[]).length;
     document.getElementById('ov-tuts').textContent = (purchased||[]).length;
@@ -530,17 +617,17 @@ async function proceedBuy() {
 
   try {
     const res = await api('POST', '/payments/artwork/checkout', fd);
-    if (_buyPayMethod === 'online' && res.checkout_url) {
-      // Redirect to Stripe Checkout
-      window.location.href = res.checkout_url;
+    // Order placed — waiting for artist approval
+    // NO payment taken yet (online payment happens only after artist approves)
+    document.getElementById('buy-step-1').style.display = 'none';
+    document.getElementById('buy-step-success').style.display = 'block';
+    if (_buyPayMethod === 'online') {
+      document.getElementById('buy-success-msg').textContent = 'Order request sent to the artist! You will be notified when they approve. Payment will only be collected after approval.';
     } else {
-      // COD — show success
-      document.getElementById('buy-step-1').style.display = 'none';
-      document.getElementById('buy-step-success').style.display = 'block';
-      document.getElementById('buy-success-msg').textContent = 'Your COD order is confirmed! The artist will contact you shortly.';
-      showToast('🎉 Order placed!');
-      loadBadges();
+      document.getElementById('buy-success-msg').textContent = 'COD order sent to the artist! Pay cash when you receive your artwork.';
     }
+    showToast('🎉 Order request sent!');
+    loadBadges();
   } catch(e) { showToast(e.message); }
 }
 
@@ -643,26 +730,41 @@ async function loadOrders() {
       return;
     }
     const statusMap = {
-      pending:{label:'Pending Artist Approval',color:'pill-orange'},
+      pending:{label:'⏳ Waiting for Artist Approval',color:'pill-orange'},
       approved:{label:'Approved ✓',color:'pill-green'},
       rejected:{label:'Not Accepted',color:'pill-red'},
       shipped:{label:'Shipped 📦',color:'pill-green'},
       delivered:{label:'Delivered ✅',color:'pill-green'}
     };
-    wrap.innerHTML = [...orders].reverse().map(o => `
-      <div class="order-card">
+    wrap.innerHTML = [...orders].reverse().map(o => {
+      const isPendingPayment = o.status === 'approved' && o.payment_status === 'awaiting_payment' && o.payment_checkout_url;
+      const isPaid = o.payment_status === 'paid';
+      const isCOD  = o.payment_type === 'cod';
+      return `
+      <div class="order-card" style="${isPendingPayment ? 'border:2px solid var(--orange);' : ''}">
         <div class="order-thumb">${o.art_image_url?`<img src="${imgUrl(o.art_image_url)}" />`:'🖼️'}</div>
         <div style="flex:1">
           <div style="font-weight:700;font-size:14px">${esc(o.art_title)}</div>
           <div style="font-size:12px;color:var(--ink3);margin-top:2px">by ${esc(o.artist_name||'Artist')}</div>
-          <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">${o.payment_type==='cod'?'💵 Cash on Delivery':'💳 Online'} · ${timeAgo(o.created_at)}</div>
-          ${o.address?`<div style="font-size:12px;color:var(--ink3);margin-top:2px">📍 ${esc(o.address)}</div>`:''}
+          <div style="font-size:12.5px;color:var(--ink3);margin-top:2px">${isCOD ? '💵 Cash on Delivery' : '💳 Online'} · ${timeAgo(o.created_at)}</div>
+          ${o.address ? `<div style="font-size:12px;color:var(--ink3);margin-top:2px">📍 ${esc(o.address)}</div>` : ''}
+          ${isPendingPayment ? `<div style="font-size:12.5px;color:var(--orange);font-weight:600;margin-top:6px">⚠️ Action needed — complete your payment!</div>` : ''}
         </div>
         <div style="text-align:right">
           <div style="font-weight:700;font-size:15px;color:var(--orange);margin-bottom:5px">₹${o.amount.toLocaleString('en-IN')}</div>
           <span class="pill ${(statusMap[o.status]||{color:'pill-gray'}).color}">${(statusMap[o.status]||{label:o.status}).label}</span>
+          ${isPendingPayment ? `
+            <div style="margin-top:8px">
+              <a href="${o.payment_checkout_url}" 
+                 style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:var(--orange);color:#fff;border-radius:8px;font-weight:700;font-size:13.5px;text-decoration:none">
+                💳 Pay Now ₹${o.amount.toLocaleString('en-IN')}
+              </a>
+            </div>` : ''}
+          ${isPaid ? `<div style="font-size:12px;color:var(--brand);font-weight:700;margin-top:5px">✅ Payment Done</div>` : ''}
+          ${isCOD && o.status === 'approved' ? `<div style="font-size:12px;color:var(--ink3);margin-top:5px">Pay cash on delivery</div>` : ''}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { console.error(e); }
 }
 
@@ -835,5 +937,42 @@ async function saveProfile() {
 init();
 setInterval(loadBadges, 30000);
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-nav-item active" onclick="showPanel('home');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('marketplace');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Browse
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('orders');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Orders
+      <span class="mob-nav-badge" id="mob-badge-orders" style="display:none">0</span>
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('messages');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages
+      <span class="mob-nav-badge" id="mob-badge-msgs" style="display:none">0</span>
+    </button>
+    <button class="mob-nav-item" onclick="showPanel('notifications');setMobActive(this)">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Alerts
+      <span class="mob-nav-badge" id="mob-badge-notifs" style="display:none">0</span>
+    </button>
+  </div>
+</nav>
+<script>
+function setMobActive(btn) {
+  document.querySelectorAll('.mob-nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+const _origSetBadge = setBadge;
+function setBadge(id, n) {
+  _origSetBadge(id, n);
+  const mobMap = {'badge-orders':'mob-badge-orders','badge-msgs':'mob-badge-msgs','badge-notifs':'mob-badge-notifs'};
+  if (mobMap[id]) { const el=document.getElementById(mobMap[id]); if(el){el.textContent=n;el.style.display=n>0?'flex':'none';} }
+}
+</script>
+
 </body>
 </html>
